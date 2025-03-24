@@ -4,6 +4,10 @@ import "./globals.css";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { DotPattern } from "@/components/magicui/dot-pattern";
+import { cn } from "@/lib/utils";
+
+
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -22,6 +26,12 @@ export default function RootLayout({
           <AppSidebar />
           <main>
             <SidebarTrigger />
+             <DotPattern
+                glow={true} // Ensure DotPattern handles the glow prop
+                className={cn(
+                  "[mask-image:radial-gradient(300px_circle_at_center,white,transparent)]"
+                )}
+              />
             {children}
             <Toaster position="top-right" />
           </main>

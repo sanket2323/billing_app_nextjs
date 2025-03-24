@@ -2,6 +2,9 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+html, body {
+  height: 100%;
+}
 
 @theme inline {
   --color-background: var(--background);
