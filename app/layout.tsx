@@ -26,12 +26,6 @@ export default function RootLayout({
           <AppSidebar />
           <main>
             <SidebarTrigger />
-             <DotPattern
-                glow={true} // Ensure DotPattern handles the glow prop
-                className={cn(
-                  "[mask-image:radial-gradient(300px_circle_at_center,white,transparent)]"
-                )}
-              />
             {children}
             <Toaster position="top-right" />
           </main>
