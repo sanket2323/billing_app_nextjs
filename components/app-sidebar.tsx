@@ -3,7 +3,6 @@ import * as React from "react";
 import { getUserSession } from "@/app/actions/auth-actions";
 import {
   AudioWaveform,
-  BookOpen,
   Bot,
   Command,
   GalleryVerticalEnd,
