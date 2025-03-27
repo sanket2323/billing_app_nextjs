@@ -56,21 +56,21 @@ const data = {
   ],
   navMain: [
     {
-      title: "Bills",
-      url: "#",
+      title: "Create New Bill",
+      url: "/invoice",
       icon: SquareTerminal,
       isActive: true,
     },
     {
       title: "Billing Statements",
-      url: "#",
+      url: "/billing_statements",
       icon: Bot,
     },
-    {
-      title: "History",
-      url: "#",
-      icon: BookOpen,
-    },
+    // {
+    //   title: "History",
+    //   url: "#",
+    //   icon: BookOpen,
+    // },
   ],
 };
 

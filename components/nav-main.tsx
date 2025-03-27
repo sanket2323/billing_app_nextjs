@@ -7,6 +7,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useRouter } from "next/navigation";
 
 export function NavMain({
   items,
@@ -22,6 +23,11 @@ export function NavMain({
     }[];
   }[];
 }) {
+  const router = useRouter();
+  const navigateTo = (url: string) => {
+    router.push(url);
+  };
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel className="text-lg font-medium">
@@ -31,10 +37,18 @@ export function NavMain({
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton tooltip={item.title} asChild>
-              <a href={item.url} className="flex items-center gap-3 text-base">
+            
+              <div>
                 {item.icon && <item.icon className="h-6 w-6" />}
-                <span className="font-medium text-lg">{item.title}</span>
-              </a>
+                <span
+                  className="font-medium text-lg"
+                  onClick={() => {
+                    navigateTo(item.url);
+                  }}
+                >
+                  {item.title}
+                </span>
+              </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}
