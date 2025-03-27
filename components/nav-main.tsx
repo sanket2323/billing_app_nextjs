@@ -1,4 +1,5 @@
-"use client";
+"use client"; // Ensures this is a Client Component
+import React from 'react';
 import { type LucideIcon } from "lucide-react";
 import {
   SidebarGroup,
@@ -24,8 +25,9 @@ export function NavMain({
   }[];
 }) {
   const router = useRouter();
-  const navigateTo = (url: string) => {
-    router.push(url);
+
+  const handleNavigation = (url: string) => {
+    router.push(url); // Client-side navigation, no refresh
   };
 
   return (
@@ -36,18 +38,14 @@ export function NavMain({
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton tooltip={item.title} asChild>
-            
-              <div>
-                {item.icon && <item.icon className="h-6 w-6" />}
-                <span
-                  className="font-medium text-lg"
-                  onClick={() => {
-                    navigateTo(item.url);
-                  }}
-                >
-                  {item.title}
-                </span>
+            <SidebarMenuButton
+              tooltip={item.title}
+              onClick={() => handleNavigation(item.url)} // Use handler function
+              asChild // Optional: ensures proper rendering if wrapped
+            >
+              <div className="flex items-center">
+                {item.icon && <item.icon className="h-6 w-6 mr-3" />}
+                <span className="font-medium text-lg">{item.title}</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
