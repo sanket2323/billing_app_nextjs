@@ -11,6 +11,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
+import { getUserSession } from "@/app/actions/auth-actions";
 import {
   Table,
   TableBody,
@@ -32,6 +33,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { db } from "@/lib/firebaseConfig"; // Adjust the path to your firebase.js file
+import { collection, doc, getDoc, setDoc } from "firebase/firestore";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 // Form schema
 const formSchema = z.object({
@@ -113,6 +118,9 @@ const FarmerBillingForm = () => {
     itar: 0,
   });
 
+  // Add a loading state
+  const [loading, setLoading] = useState(false);
+
   // Function to calculate total value of products
   const totalValueOfProductsFunction = (updatedProducts: Product[]) => {
     const total = updatedProducts.reduce(
@@ -156,9 +164,10 @@ const FarmerBillingForm = () => {
 
   // Calculate total payable amount
   const totalPayableAmount = totalValueOfProducts - totalExpense;
+  const router = useRouter();
 
   // Submit handler
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     const completeSubmission = {
       ...values,
       products: products,
@@ -167,7 +176,81 @@ const FarmerBillingForm = () => {
       totalExpense: totalExpense,
       totalPayableAmount: totalPayableAmount,
     };
-    console.log(completeSubmission);
+
+    // Start loading state
+    setLoading(true);
+
+    // Show a loading toast
+    const toastId = toast.loading("Saving bill to Firestore...");
+
+    try {
+      const session = await getUserSession();
+      if (!session?.user?.id) {
+        toast.error("Please sign in to save a bill.", { id: toastId });
+        setLoading(false);
+        return;
+      }
+
+      console.log(completeSubmission);
+      const userID = session.user.id;
+      const userDocRef = doc(db, "users", userID);
+
+      const billDocRef = doc(collection(userDocRef, "bills"), values.billNumber);
+
+      const billSnapshot = await getDoc(billDocRef);
+      if (billSnapshot.exists()) {
+        toast.error(
+          "Bill number already exists for this user. Please use a unique bill number.",
+          { id: toastId }
+        );
+        setLoading(false);
+        return;
+      }
+
+      const billData = {
+        farmerName: values.farmerName,
+        phoneNumber: values.phoneNumber,
+        city: values.city,
+        billNumber: values.billNumber,
+        billDate: values.billDate, // Firestore will automatically convert Date to Timestamp
+        products: products.map((product) => ({
+          productType: product.productType,
+          quantity: product.quantity,
+          rate: product.rate,
+        })), // Remove the temporary 'id' field
+        totalValue: totalValueOfProducts,
+        expenses: expenses,
+        totalExpense: totalExpense,
+        totalPayableAmount: totalPayableAmount,
+      };
+
+      await setDoc(billDocRef, billData);
+
+      // Update toast to success
+      toast.success("Bill saved successfully to Firestore!", { id: toastId });
+
+      form.reset();
+      setProducts([]);
+      setExpenses({
+        adat: 0,
+        hamali: 0,
+        tolai: 0,
+        varai: 0,
+        bharai: 0,
+        motorBhade: 0,
+        uchhal: 0,
+        bardana: 0,
+        itar: 0,
+      });
+      router.replace("/");
+    } catch (error) {
+      console.error("Error saving bill to Firestore:", error);
+      // Update toast to error
+      toast.error("Failed to save bill. Please try again.", { id: toastId });
+    } finally {
+      // Stop loading state
+      setLoading(false);
+    }
   }
 
   // Combined handler for adding product
@@ -194,6 +277,7 @@ const FarmerBillingForm = () => {
                       placeholder="शेतकऱ्याचे नाव टाका"
                       {...field}
                       className="bg-gray-800 text-white border-gray-700 focus:ring-1 focus:ring-blue-600 h-12 text-base"
+                      disabled={loading} // Disable input during loading
                     />
                   </FormControl>
                   <FormMessage className="text-red-400" />
@@ -215,6 +299,7 @@ const FarmerBillingForm = () => {
                         placeholder="फोन क्रमांक टाका"
                         {...field}
                         className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
+                        disabled={loading} // Disable input during loading
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
@@ -233,6 +318,7 @@ const FarmerBillingForm = () => {
                         placeholder="शहराचे नाव टाका"
                         {...field}
                         className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
+                        disabled={loading} // Disable input during loading
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
@@ -259,6 +345,7 @@ const FarmerBillingForm = () => {
                               "bg-gray-800 text-white border-gray-700 hover:bg-gray-700",
                               !field.value && "text-gray-500"
                             )}
+                            disabled={loading} // Disable button during loading
                           >
                             {field.value ? (
                               format(field.value, "PPP")
@@ -298,6 +385,7 @@ const FarmerBillingForm = () => {
                         placeholder="बिल क्रमांक"
                         {...field}
                         className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
+                        disabled={loading} // Disable input during loading
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
@@ -322,6 +410,7 @@ const FarmerBillingForm = () => {
                         placeholder="मालाचा प्रकार"
                         {...field}
                         className="bg-gray-800 text-white border-gray-700"
+                        disabled={loading} // Disable input during loading
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
@@ -344,6 +433,7 @@ const FarmerBillingForm = () => {
                           field.onChange(Number(e.target.value));
                         }}
                         className="bg-gray-800 text-white border-gray-700"
+                        disabled={loading} // Disable input during loading
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
@@ -366,6 +456,7 @@ const FarmerBillingForm = () => {
                           field.onChange(Number(e.target.value));
                         }}
                         className="bg-gray-800 text-white border-gray-700"
+                        disabled={loading} // Disable input during loading
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
@@ -379,6 +470,7 @@ const FarmerBillingForm = () => {
               type="button"
               onClick={handleAddProduct}
               className="bg-blue-700 text-white hover:bg-blue-600 transition-colors"
+              disabled={loading} // Disable button during loading
             >
               <PlusIcon className="mr-2 h-4 w-4" /> माल जोडा
             </Button>
@@ -416,6 +508,7 @@ const FarmerBillingForm = () => {
                           size="icon"
                           onClick={() => removeProduct(product.id)}
                           className="bg-red-600 hover:bg-red-500"
+                          disabled={loading} // Disable button during loading
                         >
                           <TrashIcon className="h-4 w-4" />
                         </Button>
@@ -450,11 +543,10 @@ const FarmerBillingForm = () => {
                   <Input
                     type="number"
                     value={expenses.adat}
-                    onChange={(e) =>
-                      handleExpenseChange("adat", e.target.value)
-                    }
+                    onChange={(e) => handleExpenseChange("adat", e.target.value)}
                     className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
                     placeholder="आडत"
+                    disabled={loading} // Disable input during loading
                   />
                 </div>
 
@@ -469,6 +561,7 @@ const FarmerBillingForm = () => {
                     }
                     className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
                     placeholder="हमाली"
+                    disabled={loading} // Disable input during loading
                   />
                 </div>
 
@@ -483,6 +576,7 @@ const FarmerBillingForm = () => {
                     }
                     className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
                     placeholder="तोलाई"
+                    disabled={loading} // Disable input during loading
                   />
                 </div>
 
@@ -497,6 +591,7 @@ const FarmerBillingForm = () => {
                     }
                     className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
                     placeholder="वराई"
+                    disabled={loading} // Disable input during loading
                   />
                 </div>
 
@@ -511,6 +606,7 @@ const FarmerBillingForm = () => {
                     }
                     className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
                     placeholder="भराई"
+                    disabled={loading} // Disable input during loading
                   />
                 </div>
 
@@ -525,6 +621,7 @@ const FarmerBillingForm = () => {
                     }
                     className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
                     placeholder="मोटर भाडे"
+                    disabled={loading} // Disable input during loading
                   />
                 </div>
 
@@ -539,6 +636,7 @@ const FarmerBillingForm = () => {
                     }
                     className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
                     placeholder="उच्छल"
+                    disabled={loading} // Disable input during loading
                   />
                 </div>
 
@@ -553,6 +651,7 @@ const FarmerBillingForm = () => {
                     }
                     className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
                     placeholder="बर्दाना"
+                    disabled={loading} // Disable input during loading
                   />
                 </div>
 
@@ -567,6 +666,7 @@ const FarmerBillingForm = () => {
                     }
                     className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
                     placeholder="इतर"
+                    disabled={loading} // Disable input during loading
                   />
                 </div>
               </div>
@@ -592,8 +692,35 @@ const FarmerBillingForm = () => {
             <Button
               type="submit"
               className="w-full bg-blue-700 text-white hover:bg-blue-600 transition-colors h-12 text-base"
+              disabled={loading} // Disable button during loading
             >
-              बिल जतन करा
+              {loading ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5 mr-2 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Saving...
+                </>
+              ) : (
+                "बिल जतन करा"
+              )}
             </Button>
           </form>
         </Form>
