@@ -27,9 +27,11 @@ export function NavMain({
 }) {
   const router = useRouter();
   const { setOpen } = useSidebar();
+  const {setOpenMobile} = useSidebar();
   const handleNavigation = (url: string) => {
     router.push(url); // Client-side navigation, no refresh
     setOpen(false)
+    setOpenMobile(false)
   };
 
   return (
