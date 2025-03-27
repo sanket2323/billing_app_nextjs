@@ -9,6 +9,7 @@ const Page = () => {
         </h2>
       <div className="w-full">
         <FarmerBillingForm />
+        {/* this is updated code */}
       </div>
     </div>
   );
