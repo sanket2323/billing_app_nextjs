@@ -4,10 +4,6 @@ import "./globals.css";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
-import { DotPattern } from "@/components/magicui/dot-pattern";
-import { cn } from "@/lib/utils";
-
-
 
 export const metadata: Metadata = {
   title: "Create Next App",

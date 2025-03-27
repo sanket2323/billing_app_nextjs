@@ -1,5 +1,15 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  width:100%;
+}
+
+full-width{
+  @apply w-full
+}
 
 @custom-variant dark (&:is(.dark *));
 
