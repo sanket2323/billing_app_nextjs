@@ -7,6 +7,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
 
@@ -25,15 +26,16 @@ export function NavMain({
   }[];
 }) {
   const router = useRouter();
-
+  const { setOpen } = useSidebar();
   const handleNavigation = (url: string) => {
     router.push(url); // Client-side navigation, no refresh
+    setOpen(false)
   };
 
   return (
     <SidebarGroup>
       <SidebarGroupLabel className="text-lg font-medium">
-        Platform
+        Automate Bills
       </SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
