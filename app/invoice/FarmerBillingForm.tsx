@@ -33,10 +33,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { db } from "@/lib/firebaseConfig"; // Adjust the path to your firebase.js file
+import { db } from "@/lib/firebaseConfig";
 import { collection, doc, getDoc, setDoc } from "firebase/firestore";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { pdf } from "@react-pdf/renderer";
+import { FarmerBillingPDF } from "../pdf/FarmerBillingPDF";
 
 // Form schema
 const formSchema = z.object({
@@ -62,10 +64,8 @@ const productSchema = z.object({
   rate: z.number().min(0, { message: "वैध दर टाका" }),
 });
 
-// Define the product type explicitly
 type Product = z.infer<typeof productSchema> & { id: string };
 
-// Define the expense type
 type Expenses = {
   adat: number;
   hamali: number;
@@ -79,7 +79,6 @@ type Expenses = {
 };
 
 const FarmerBillingForm = () => {
-  // Main form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -91,7 +90,6 @@ const FarmerBillingForm = () => {
     },
   });
 
-  // Product input form
   const productForm = useForm<z.infer<typeof productSchema>>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -101,11 +99,8 @@ const FarmerBillingForm = () => {
     },
   });
 
-  // State to store products and total value
   const [products, setProducts] = useState<Product[]>([]);
   const [totalValueOfProducts, setTotalValueOfProducts] = useState(0);
-
-  // State to store expenses
   const [expenses, setExpenses] = useState<Expenses>({
     adat: 0,
     hamali: 0,
@@ -117,11 +112,8 @@ const FarmerBillingForm = () => {
     bardana: 0,
     itar: 0,
   });
-
-  // Add a loading state
   const [loading, setLoading] = useState(false);
 
-  // Function to calculate total value of products
   const totalValueOfProductsFunction = (updatedProducts: Product[]) => {
     const total = updatedProducts.reduce(
       (sum, product) => sum + product.quantity * product.rate,
@@ -130,57 +122,59 @@ const FarmerBillingForm = () => {
     setTotalValueOfProducts(total);
   };
 
-  // Add product to the list
   const addProduct = (data: z.infer<typeof productSchema>) => {
     const newProduct: Product = {
       ...data,
-      id: Math.random().toString(36).substr(2, 9), // Generate unique ID
+      id: Math.random().toString(36).substr(2, 9),
     };
     const updatedProducts = [...products, newProduct];
     setProducts(updatedProducts);
-    totalValueOfProductsFunction(updatedProducts); // Update total after adding
+    totalValueOfProductsFunction(updatedProducts);
     productForm.reset();
   };
 
-  // Remove product from the list
   const removeProduct = (id: string) => {
     const updatedProducts = products.filter((product) => product.id !== id);
     setProducts(updatedProducts);
-    totalValueOfProductsFunction(updatedProducts); // Update total after removing
+    totalValueOfProductsFunction(updatedProducts);
   };
 
-  // Handle expense input change
   const handleExpenseChange = (field: keyof Expenses, value: string) => {
     setExpenses((prev) => ({
       ...prev,
-      [field]: Number(value) || 0, // Convert to number, default to 0 if invalid
+      [field]: Number(value) || 0,
     }));
   };
 
-  // Calculate total expense using useMemo to avoid unnecessary recalculations
   const totalExpense = useMemo(() => {
     return Object.values(expenses).reduce((sum, value) => sum + value, 0);
   }, [expenses]);
 
-  // Calculate total payable amount
   const totalPayableAmount = totalValueOfProducts - totalExpense;
   const router = useRouter();
 
-  // Submit handler
+  const generateAndDownloadPDF = async (billData: any) => {
+    const blob = await pdf(<FarmerBillingPDF billData={billData} />).toBlob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `bill_${billData.billNumber}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const completeSubmission = {
       ...values,
-      products: products,
+      products,
       totalValue: totalValueOfProducts,
-      expenses: expenses,
-      totalExpense: totalExpense,
-      totalPayableAmount: totalPayableAmount,
+      expenses,
+      totalExpense,
+      totalPayableAmount,
     };
-
-    // Start loading state
     setLoading(true);
-
-    // Show a loading toast
     const toastId = toast.loading("Saving bill to Firestore...");
 
     try {
@@ -191,10 +185,8 @@ const FarmerBillingForm = () => {
         return;
       }
 
-      console.log(completeSubmission);
       const userID = session.user.id;
       const userDocRef = doc(db, "users", userID);
-
       const billDocRef = doc(collection(userDocRef, "bills"), values.billNumber);
 
       const billSnapshot = await getDoc(billDocRef);
@@ -212,21 +204,21 @@ const FarmerBillingForm = () => {
         phoneNumber: values.phoneNumber,
         city: values.city,
         billNumber: values.billNumber,
-        billDate: values.billDate, // Firestore will automatically convert Date to Timestamp
+        billDate: values.billDate,
         products: products.map((product) => ({
           productType: product.productType,
           quantity: product.quantity,
           rate: product.rate,
-        })), // Remove the temporary 'id' field
+        })),
         totalValue: totalValueOfProducts,
-        expenses: expenses,
-        totalExpense: totalExpense,
-        totalPayableAmount: totalPayableAmount,
+        expenses,
+        totalExpense,
+        totalPayableAmount,
       };
 
       await setDoc(billDocRef, billData);
+      await generateAndDownloadPDF(billData);
 
-      // Update toast to success
       toast.success("Bill saved successfully to Firestore!", { id: toastId });
 
       form.reset();
@@ -242,18 +234,16 @@ const FarmerBillingForm = () => {
         bardana: 0,
         itar: 0,
       });
-      router.replace("/");
+
+      router.push("/");
     } catch (error) {
       console.error("Error saving bill to Firestore:", error);
-      // Update toast to error
       toast.error("Failed to save bill. Please try again.", { id: toastId });
     } finally {
-      // Stop loading state
       setLoading(false);
     }
   }
 
-  // Combined handler for adding product
   const handleAddProduct = () => {
     productForm.handleSubmit(addProduct)();
   };
@@ -263,21 +253,18 @@ const FarmerBillingForm = () => {
       <div className="w-full max-w-5xl sm:p-8 md:p-10 rounded-xl shadow-2xl">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Farmer Name - Full Row */}
             <FormField
               control={form.control}
               name="farmerName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-300">
-                    शेतकऱ्याचे नाव
-                  </FormLabel>
+                  <FormLabel className="text-gray-300">शेतकऱ्याचे नाव</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="शेतकऱ्याचे नाव टाका"
                       {...field}
                       className="bg-gray-800 text-white border-gray-700 focus:ring-1 focus:ring-blue-600 h-12 text-base"
-                      disabled={loading} // Disable input during loading
+                      disabled={loading}
                     />
                   </FormControl>
                   <FormMessage className="text-red-400" />
@@ -285,7 +272,6 @@ const FarmerBillingForm = () => {
               )}
             />
 
-            {/* Phone Number & City - Responsive Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
@@ -299,14 +285,13 @@ const FarmerBillingForm = () => {
                         placeholder="फोन क्रमांक टाका"
                         {...field}
                         className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
-                        disabled={loading} // Disable input during loading
+                        disabled={loading}
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="city"
@@ -318,7 +303,7 @@ const FarmerBillingForm = () => {
                         placeholder="शहराचे नाव टाका"
                         {...field}
                         className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
-                        disabled={loading} // Disable input during loading
+                        disabled={loading}
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
@@ -327,7 +312,6 @@ const FarmerBillingForm = () => {
               />
             </div>
 
-            {/* Bill Date & Bill Number - Responsive Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
@@ -345,7 +329,7 @@ const FarmerBillingForm = () => {
                               "bg-gray-800 text-white border-gray-700 hover:bg-gray-700",
                               !field.value && "text-gray-500"
                             )}
-                            disabled={loading} // Disable button during loading
+                            disabled={loading}
                           >
                             {field.value ? (
                               format(field.value, "PPP")
@@ -373,7 +357,6 @@ const FarmerBillingForm = () => {
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="billNumber"
@@ -385,7 +368,7 @@ const FarmerBillingForm = () => {
                         placeholder="बिल क्रमांक"
                         {...field}
                         className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
-                        disabled={loading} // Disable input during loading
+                        disabled={loading}
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
@@ -395,29 +378,25 @@ const FarmerBillingForm = () => {
             </div>
             <div className="border-b-2"></div>
 
-            {/* Product Input Section */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <FormField
                 control={productForm.control}
                 name="productType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">
-                      मालाचा प्रकार
-                    </FormLabel>
+                    <FormLabel className="text-gray-300">मालाचा प्रकार</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="मालाचा प्रकार"
                         {...field}
                         className="bg-gray-800 text-white border-gray-700"
-                        disabled={loading} // Disable input during loading
+                        disabled={loading}
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={productForm.control}
                 name="quantity"
@@ -429,18 +408,15 @@ const FarmerBillingForm = () => {
                         type="number"
                         placeholder="नग"
                         {...field}
-                        onChange={(e) => {
-                          field.onChange(Number(e.target.value));
-                        }}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
                         className="bg-gray-800 text-white border-gray-700"
-                        disabled={loading} // Disable input during loading
+                        disabled={loading}
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={productForm.control}
                 name="rate"
@@ -452,11 +428,9 @@ const FarmerBillingForm = () => {
                         type="number"
                         placeholder="दर"
                         {...field}
-                        onChange={(e) => {
-                          field.onChange(Number(e.target.value));
-                        }}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
                         className="bg-gray-800 text-white border-gray-700"
-                        disabled={loading} // Disable input during loading
+                        disabled={loading}
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
@@ -465,17 +439,16 @@ const FarmerBillingForm = () => {
               />
             </div>
 
-            {/* Add Product Button */}
             <Button
               type="button"
               onClick={handleAddProduct}
               className="bg-blue-700 text-white hover:bg-blue-600 transition-colors"
-              disabled={loading} // Disable button during loading
+              disabled={loading}
+              aria-label="Add Product"
             >
               <PlusIcon className="mr-2 h-4 w-4" /> माल जोडा
             </Button>
 
-            {/* Product Details Table */}
             <div className="w-full">
               <Table className="w-full">
                 <TableCaption>मालाचा तपशील</TableCaption>
@@ -484,12 +457,8 @@ const FarmerBillingForm = () => {
                     <TableHead className="w-[200px]">मालाचा प्रकार</TableHead>
                     <TableHead className="w-[100px]">नग</TableHead>
                     <TableHead className="w-[100px]">दर</TableHead>
-                    <TableHead className="w-[100px] text-right">
-                      रक्कम
-                    </TableHead>
-                    <TableHead className="w-[100px] text-center">
-                      क्रिया
-                    </TableHead>
+                    <TableHead className="w-[100px] text-right">रक्कम</TableHead>
+                    <TableHead className="w-[100px] text-center">क्रिया</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -508,7 +477,8 @@ const FarmerBillingForm = () => {
                           size="icon"
                           onClick={() => removeProduct(product.id)}
                           className="bg-red-600 hover:bg-red-500"
-                          disabled={loading} // Disable button during loading
+                          disabled={loading}
+                          aria-label="Remove Product"
                         >
                           <TrashIcon className="h-4 w-4" />
                         </Button>
@@ -519,9 +489,7 @@ const FarmerBillingForm = () => {
                 <TableFooter>
                   <TableRow>
                     <TableCell colSpan={3}>एकूण किंमत:</TableCell>
-                    <TableCell className="text-right">
-                      {totalValueOfProducts}
-                    </TableCell>
+                    <TableCell className="text-right">{totalValueOfProducts}</TableCell>
                     <TableCell></TableCell>
                   </TableRow>
                 </TableFooter>
@@ -529,170 +497,59 @@ const FarmerBillingForm = () => {
             </div>
             <div className="border-b-2"></div>
 
-            {/* Expense Cost Section */}
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-300">
-                  खर्चाचा तपशील
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-300">खर्चाचा तपशील</h3>
               </div>
               <div className="grid grid-cols-3 sm:grid-cols-3 gap-4">
-                {/* आडत */}
-                <div>
-                  <label className="block text-gray-300 mb-1">आडत</label>
-                  <Input
-                    type="number"
-                    value={expenses.adat}
-                    onChange={(e) => handleExpenseChange("adat", e.target.value)}
-                    className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
-                    placeholder="आडत"
-                    disabled={loading} // Disable input during loading
-                  />
-                </div>
-
-                {/* हमाली */}
-                <div>
-                  <label className="block text-gray-300 mb-1">हमाली</label>
-                  <Input
-                    type="number"
-                    value={expenses.hamali}
-                    onChange={(e) =>
-                      handleExpenseChange("hamali", e.target.value)
-                    }
-                    className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
-                    placeholder="हमाली"
-                    disabled={loading} // Disable input during loading
-                  />
-                </div>
-
-                {/* तोलाई */}
-                <div>
-                  <label className="block text-gray-300 mb-1">तोलाई</label>
-                  <Input
-                    type="number"
-                    value={expenses.tolai}
-                    onChange={(e) =>
-                      handleExpenseChange("tolai", e.target.value)
-                    }
-                    className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
-                    placeholder="तोलाई"
-                    disabled={loading} // Disable input during loading
-                  />
-                </div>
-
-                {/* वराई */}
-                <div>
-                  <label className="block text-gray-300 mb-1">वराई</label>
-                  <Input
-                    type="number"
-                    value={expenses.varai}
-                    onChange={(e) =>
-                      handleExpenseChange("varai", e.target.value)
-                    }
-                    className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
-                    placeholder="वराई"
-                    disabled={loading} // Disable input during loading
-                  />
-                </div>
-
-                {/* भराई */}
-                <div>
-                  <label className="block text-gray-300 mb-1">भराई</label>
-                  <Input
-                    type="number"
-                    value={expenses.bharai}
-                    onChange={(e) =>
-                      handleExpenseChange("bharai", e.target.value)
-                    }
-                    className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
-                    placeholder="भराई"
-                    disabled={loading} // Disable input during loading
-                  />
-                </div>
-
-                {/* मोटर भाडे */}
-                <div>
-                  <label className="block text-gray-300 mb-1">मोटर भाडे</label>
-                  <Input
-                    type="number"
-                    value={expenses.motorBhade}
-                    onChange={(e) =>
-                      handleExpenseChange("motorBhade", e.target.value)
-                    }
-                    className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
-                    placeholder="मोटर भाडे"
-                    disabled={loading} // Disable input during loading
-                  />
-                </div>
-
-                {/* उच्छल */}
-                <div>
-                  <label className="block text-gray-300 mb-1">उच्छल</label>
-                  <Input
-                    type="number"
-                    value={expenses.uchhal}
-                    onChange={(e) =>
-                      handleExpenseChange("uchhal", e.target.value)
-                    }
-                    className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
-                    placeholder="उच्छल"
-                    disabled={loading} // Disable input during loading
-                  />
-                </div>
-
-                {/* बर्दाना */}
-                <div>
-                  <label className="block text-gray-300 mb-1">बर्दाना</label>
-                  <Input
-                    type="number"
-                    value={expenses.bardana}
-                    onChange={(e) =>
-                      handleExpenseChange("bardana", e.target.value)
-                    }
-                    className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
-                    placeholder="बर्दाना"
-                    disabled={loading} // Disable input during loading
-                  />
-                </div>
-
-                {/* इतर */}
-                <div>
-                  <label className="block text-gray-300 mb-1">इतर</label>
-                  <Input
-                    type="number"
-                    value={expenses.itar}
-                    onChange={(e) =>
-                      handleExpenseChange("itar", e.target.value)
-                    }
-                    className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
-                    placeholder="इतर"
-                    disabled={loading} // Disable input during loading
-                  />
-                </div>
+                {Object.entries(expenses).map(([key, value]) => (
+                  <div key={key}>
+                    <label className="block text-gray-300 mb-1">
+                      {key === "adat" ? "आडत" :
+                       key === "hamali" ? "हमाली" :
+                       key === "tolai" ? "तोलाई" :
+                       key === "varai" ? "वराई" :
+                       key === "bharai" ? "भराई" :
+                       key === "motorBhade" ? "मोटर भाडे" :
+                       key === "uchhal" ? "उच्छल" :
+                       key === "bardana" ? "बर्दाना" : "इतर"}
+                    </label>
+                    <Input
+                      type="number"
+                      value={value}
+                      onChange={(e) => handleExpenseChange(key as keyof Expenses, e.target.value)}
+                      className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
+                      placeholder={key === "adat" ? "आडत" :
+                                   key === "hamali" ? "हमाली" :
+                                   key === "tolai" ? "तोलाई" :
+                                   key === "varai" ? "वराई" :
+                                   key === "bharai" ? "भराई" :
+                                   key === "motorBhade" ? "मोटर भाडे" :
+                                   key === "uchhal" ? "उच्छल" :
+                                   key === "bardana" ? "बर्दाना" : "इतर"}
+                      disabled={loading}
+                    />
+                  </div>
+                ))}
               </div>
-
               <div className="flex justify-end">
-                <p className="text-gray-300 mt-4 justify-end">
-                  एकूण खर्च:{" "}
-                  <span className="font-semibold">{totalExpense}</span>
+                <p className="text-gray-300 mt-4">
+                  एकूण खर्च: <span className="font-semibold">{totalExpense}</span>
                 </p>
               </div>
             </div>
             <div className="border-b-2"></div>
 
-            {/* Total Payable Amount */}
             <div className="flex justify-end">
               <p className="text-gray-300 text-lg">
-                एकूण देय रक्कम:{" "}
-                <span className="font-semibold">{totalPayableAmount}</span>
+                एकूण देय रक्कम: <span className="font-semibold">{totalPayableAmount}</span>
               </p>
             </div>
 
-            {/* Submit Button */}
             <Button
               type="submit"
               className="w-full bg-blue-700 text-white hover:bg-blue-600 transition-colors h-12 text-base"
-              disabled={loading} // Disable button during loading
+              disabled={loading}
             >
               {loading ? (
                 <>
@@ -709,17 +566,17 @@ const FarmerBillingForm = () => {
                       r="10"
                       stroke="currentColor"
                       strokeWidth="4"
-                    ></circle>
+                    />
                     <path
                       className="opacity-75"
                       fill="currentColor"
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
+                    />
                   </svg>
                   Saving...
                 </>
               ) : (
-                "बिल जतन करा"
+                "बिल जतन करा आणि डाउनलोड करा"
               )}
             </Button>
           </form>
