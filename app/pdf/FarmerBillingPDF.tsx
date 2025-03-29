@@ -33,7 +33,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   table: {
-    display: 'table',
     width: '100%',
     borderStyle: 'solid',
     borderWidth: 1,
@@ -59,7 +58,20 @@ const styles = StyleSheet.create({
 });
 
 // PDF Invoice Component
-export const FarmerBillingPDF = ({ billData }) => (
+interface BillData {
+  billNumber: string;
+  farmerName: string;
+  phoneNumber: string;
+  city: string;
+  billDate: Date;
+  products: { productType: string; quantity: number; rate: number }[];
+  expenses: Record<string, number>;
+  totalValue: number;
+  totalExpense: number;
+  totalPayableAmount: number;
+}
+
+export const FarmerBillingPDF = ({ billData }: { billData: BillData }) => (
   <Document>
     <Page size="A4" style={styles.page}>
       {/* Header */}
@@ -98,7 +110,7 @@ export const FarmerBillingPDF = ({ billData }) => (
           <Text style={[styles.tableCell, { width: '40%' }]}>Product Type</Text>
           <Text style={[styles.tableCell, { width: '20%' }]}>Quantity</Text>
           <Text style={[styles.tableCell, { width: '20%' }]}>Rate</Text>
-          <Text style={[styles.tableCell, { width: '20%' }]}>Total</Text>
+          <Text style={[styles.tableCell, { width: '20%', borderRightWidth: 0 }]}>Total</Text>
         </View>
         {billData.products.map((product, index) => (
           <View key={index} style={styles.tableRow}>
@@ -111,7 +123,7 @@ export const FarmerBillingPDF = ({ billData }) => (
             <Text style={[styles.tableCell, { width: '20%' }]}>
               {product.rate}
             </Text>
-            <Text style={[styles.tableCell, { width: '20%' }]}>
+            <Text style={[styles.tableCell, { width: '20%', borderRightWidth: 0 }]}>
               {product.quantity * product.rate}
             </Text>
           </View>
@@ -149,7 +161,7 @@ export const FarmerBillingPDF = ({ billData }) => (
 );
 
 // Modify the existing FarmerBillingForm to include PDF generation
-export const PDFGenerationButton = ({ billData }) => {
+export const PDFGenerationButton = ({ billData }: { billData: BillData }) => {
   return (
     <PDFDownloadLink
       document={<FarmerBillingPDF billData={billData} />}
