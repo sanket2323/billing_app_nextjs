@@ -13,6 +13,7 @@ import { collection, doc, getDocs } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { getUserSession } from "../actions/auth-actions";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 type Bill = {
   id: string;
@@ -85,16 +86,21 @@ const formatFirestoreDate = (timestamp: {
 const Page = () => {
   const [bills, setBills] = useState<Bill[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        setPageLoading(true);
+        
         const session = await getUserSession();
         if (!session?.user?.id) {
           toast.error("कृपया बिल पाहण्यासाठी साइन इन करा।");
+          setPageLoading(false);
           return;
         }
+        
         const userID = session.user.id;
         const userDocRef = doc(db, "users", userID);
         const billsCollectionRef = collection(userDocRef, "bills");
@@ -113,11 +119,23 @@ const Page = () => {
         toast.error("बिले लोड करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा।");
       } finally {
         setIsLoading(false);
+        setPageLoading(false);
       }
     };
 
     fetchData();
   }, []);
+
+  if (pageLoading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-lg font-medium">पृष्ठ लोड होत आहे...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-w-screen p-2">
@@ -135,7 +153,10 @@ const Page = () => {
           {isLoading ? (
             <TableRow>
               <TableCell colSpan={4} className="text-center">
-                बिले लोड होत आहेत...
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+                  <span>बिले लोड होत आहेत...</span>
+                </div>
               </TableCell>
             </TableRow>
           ) : bills.length === 0 ? (
@@ -149,10 +170,10 @@ const Page = () => {
               <TableRow key={bill.id}>
                 <TableCell className="font-medium">
                   <div className="flex flex-col">
-                    <span>
-                    {bill.farmerName}
-                      </span>
-                    {formatFirestoreDate(bill.billDate)}
+                    <span>{bill.farmerName}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {formatFirestoreDate(bill.billDate)}
+                    </span>
                   </div>
                 </TableCell>
                 <TableCell>{bill.id}</TableCell>
