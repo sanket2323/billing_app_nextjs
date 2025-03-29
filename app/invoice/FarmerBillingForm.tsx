@@ -140,9 +140,14 @@ const FarmerBillingForm = () => {
   };
 
   const handleExpenseChange = (field: keyof Expenses, value: string) => {
+    let processedValue = value;
+    if (value.length > 1 && value.startsWith("0")) {
+      processedValue = value.replace(/^0+/, "");
+    }
+
     setExpenses((prev) => ({
       ...prev,
-      [field]: Number(value) || 0,
+      [field]: processedValue === "" ? 0 : Number(processedValue),
     }));
   };
 
@@ -177,7 +182,7 @@ const FarmerBillingForm = () => {
     };
     setLoading(true);
     const toastId = toast.loading("Saving bill to Firestore...");
-    console.log(completeSubmission)
+    console.log(completeSubmission);
     try {
       const session = await getUserSession();
       if (!session?.user?.id) {
@@ -188,7 +193,10 @@ const FarmerBillingForm = () => {
 
       const userID = session.user.id;
       const userDocRef = doc(db, "users", userID);
-      const billDocRef = doc(collection(userDocRef, "bills"), values.billNumber);
+      const billDocRef = doc(
+        collection(userDocRef, "bills"),
+        values.billNumber
+      );
 
       const billSnapshot = await getDoc(billDocRef);
       if (billSnapshot.exists()) {
@@ -259,7 +267,9 @@ const FarmerBillingForm = () => {
               name="farmerName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-300">शेतकऱ्याचे नाव</FormLabel>
+                  <FormLabel className="text-gray-300">
+                    शेतकऱ्याचे नाव
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="शेतकऱ्याचे नाव टाका"
@@ -385,7 +395,9 @@ const FarmerBillingForm = () => {
                 name="productType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">मालाचा प्रकार</FormLabel>
+                    <FormLabel className="text-gray-300">
+                      मालाचा प्रकार
+                    </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="मालाचा प्रकार"
@@ -408,8 +420,13 @@ const FarmerBillingForm = () => {
                       <Input
                         type="number"
                         placeholder="नग"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value === 0 ? "" : field.value}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // If the field is empty, set it to 0 in the form state,
+                          // but display empty string in the input
+                          field.onChange(value === "" ? 0 : Number(value));
+                        }}
                         className="bg-gray-800 text-white border-gray-700"
                         disabled={loading}
                       />
@@ -418,6 +435,7 @@ const FarmerBillingForm = () => {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={productForm.control}
                 name="rate"
@@ -428,8 +446,11 @@ const FarmerBillingForm = () => {
                       <Input
                         type="number"
                         placeholder="दर"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value === 0 ? "" : field.value}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value === "" ? 0 : Number(value));
+                        }}
                         className="bg-gray-800 text-white border-gray-700"
                         disabled={loading}
                       />
@@ -458,8 +479,12 @@ const FarmerBillingForm = () => {
                     <TableHead className="w-[200px]">मालाचा प्रकार</TableHead>
                     <TableHead className="w-[100px]">नग</TableHead>
                     <TableHead className="w-[100px]">दर</TableHead>
-                    <TableHead className="w-[100px] text-right">रक्कम</TableHead>
-                    <TableHead className="w-[100px] text-center">क्रिया</TableHead>
+                    <TableHead className="w-[100px] text-right">
+                      रक्कम
+                    </TableHead>
+                    <TableHead className="w-[100px] text-center">
+                      क्रिया
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -490,7 +515,9 @@ const FarmerBillingForm = () => {
                 <TableFooter>
                   <TableRow>
                     <TableCell colSpan={3}>एकूण किंमत:</TableCell>
-                    <TableCell className="text-right">{totalValueOfProducts}</TableCell>
+                    <TableCell className="text-right">
+                      {totalValueOfProducts}
+                    </TableCell>
                     <TableCell></TableCell>
                   </TableRow>
                 </TableFooter>
@@ -500,34 +527,61 @@ const FarmerBillingForm = () => {
 
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-300">खर्चाचा तपशील</h3>
+                <h3 className="text-lg font-semibold text-gray-300">
+                  खर्चाचा तपशील
+                </h3>
               </div>
               <div className="grid grid-cols-3 sm:grid-cols-3 gap-4">
                 {Object.entries(expenses).map(([key, value]) => (
                   <div key={key}>
                     <label className="block text-gray-300 mb-1">
-                      {key === "adat" ? "आडत" :
-                       key === "hamali" ? "हमाली" :
-                       key === "tolai" ? "तोलाई" :
-                       key === "varai" ? "वराई" :
-                       key === "bharai" ? "भराई" :
-                       key === "motorBhade" ? "मोटर भाडे" :
-                       key === "uchhal" ? "उच्छल" :
-                       key === "bardana" ? "बर्दाना" : "इतर"}
+                      {key === "adat"
+                        ? "आडत"
+                        : key === "hamali"
+                        ? "हमाली"
+                        : key === "tolai"
+                        ? "तोलाई"
+                        : key === "varai"
+                        ? "वराई"
+                        : key === "bharai"
+                        ? "भराई"
+                        : key === "motorBhade"
+                        ? "मोटर भाडे"
+                        : key === "uchhal"
+                        ? "उच्छल"
+                        : key === "bardana"
+                        ? "बर्दाना"
+                        : "इतर"}
                     </label>
                     <Input
                       type="number"
-                      value={value}
-                      onChange={(e) => handleExpenseChange(key as keyof Expenses, e.target.value)}
+                      value={value === 0 ? "" : value}
+                      onChange={(e) =>
+                        handleExpenseChange(
+                          key as keyof Expenses,
+                          e.target.value
+                        )
+                      }
                       className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
-                      placeholder={key === "adat" ? "आडत" :
-                                   key === "hamali" ? "हमाली" :
-                                   key === "tolai" ? "तोलाई" :
-                                   key === "varai" ? "वराई" :
-                                   key === "bharai" ? "भराई" :
-                                   key === "motorBhade" ? "मोटर भाडे" :
-                                   key === "uchhal" ? "उच्छल" :
-                                   key === "bardana" ? "बर्दाना" : "इतर"}
+                      placeholder={
+                        key === "adat"
+                          ? "आडत"
+                          : key === "hamali"
+                          ? "हमाली"
+                          : key === "tolai"
+                          ? "तोलाई"
+                          : key === "varai"
+                          ? "वराई"
+                          : key === "bharai"
+                          ? "भराई"
+                          : key === "motorBhade"
+                          ? "मोटर भाडे"
+                          : key === "uchhal"
+                          ? "उच्छल"
+                          : key === "bardana"
+                          ? "बर्दाना"
+                          : "इतर"
+                      }
                       disabled={loading}
                     />
                   </div>
@@ -535,7 +589,8 @@ const FarmerBillingForm = () => {
               </div>
               <div className="flex justify-end">
                 <p className="text-gray-300 mt-4">
-                  एकूण खर्च: <span className="font-semibold">{totalExpense}</span>
+                  एकूण खर्च:{" "}
+                  <span className="font-semibold">{totalExpense}</span>
                 </p>
               </div>
             </div>
@@ -543,7 +598,8 @@ const FarmerBillingForm = () => {
 
             <div className="flex justify-end">
               <p className="text-gray-300 text-lg">
-                एकूण देय रक्कम: <span className="font-semibold">{totalPayableAmount}</span>
+                एकूण देय रक्कम:{" "}
+                <span className="font-semibold">{totalPayableAmount}</span>
               </p>
             </div>
 
