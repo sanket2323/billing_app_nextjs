@@ -153,6 +153,7 @@ const FarmerBillingForm = () => {
   const totalPayableAmount = totalValueOfProducts - totalExpense;
   const router = useRouter();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const generateAndDownloadPDF = async (billData: any) => {
     const blob = await pdf(<FarmerBillingPDF billData={billData} />).toBlob();
     const url = URL.createObjectURL(blob);
@@ -176,7 +177,7 @@ const FarmerBillingForm = () => {
     };
     setLoading(true);
     const toastId = toast.loading("Saving bill to Firestore...");
-
+    console.log(completeSubmission)
     try {
       const session = await getUserSession();
       if (!session?.user?.id) {
