@@ -14,9 +14,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { db } from "@/lib/firebaseConfig";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, doc, setDoc } from "firebase/firestore";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { getUserSession } from "../actions/auth-actions";
 
 // Form schema
 const formSchema = z.object({
@@ -29,7 +30,7 @@ const formSchema = z.object({
     .min(1, { message: "नोंदणी क्रमांक आवश्यक आहे" }),
   gstNumber: z
     .string()
-    .min(15, { message: "योग्य GST क्रमांक टाका" })
+    .min(0, { message: "योग्य GST क्रमांक टाका" })
     .max(15, { message: "योग्य GST क्रमांक टाका" })
     .optional(),
   phoneNumber: z
@@ -39,7 +40,7 @@ const formSchema = z.object({
     .string()
     .regex(/^[0-9]{10}$/, { message: "योग्य पर्यायी फोन क्रमांक टाका" })
     .optional()
-    .or(z.literal('')),
+    .or(z.literal("")),
   address: z.string().min(3, { message: "पत्ता आवश्यक आहे" }),
   city: z.string().min(2, { message: "शहराचे नाव आवश्यक आहे" }),
   state: z.string().min(2, { message: "राज्याचे नाव आवश्यक आहे" }),
@@ -81,22 +82,30 @@ const CompanyRegistrationForm = () => {
         createdAt: new Date(), // Add timestamp
       };
 
-      // Add to Firestore collection
-      const docRef = await addDoc(collection(db, "company_details"), companyData);
+      const session = await getUserSession();
+      if (!session?.user?.id) {
+        toast.error("Please sign in to save a Company Details", { id: toastId });
+        setLoading(false);
+        return;
+      }
+        const userID = session.user.id;
+        const userDocRef = doc(db, "users", userID);
+        const companyDocRef = doc(collection(userDocRef,"company_details"))
+      
 
-      toast.success(`कंपनीचे तपशील यशस्वीरित्या जतन केले! ID: ${docRef.id}`, { 
-        id: toastId 
-      });
-
+      await setDoc(companyDocRef,companyData)
+      toast.success("Company Details saved successfully to Firestore!", { id: toastId });
       // Reset form after successful submission
       form.reset();
       router.push("/"); // Redirect to home or another page
-
     } catch (error) {
       console.error("Firestore submission error:", error);
-      toast.error("कंपनीचे तपशील जतन करताना त्रुटी आली. कृपया पुन्हा प्रयत्न करा.", { 
-        id: toastId 
-      });
+      toast.error(
+        "कंपनीचे तपशील जतन करताना त्रुटी आली. कृपया पुन्हा प्रयत्न करा.",
+        {
+          id: toastId,
+        }
+      );
     } finally {
       setLoading(false);
     }
@@ -133,7 +142,9 @@ const CompanyRegistrationForm = () => {
               name="registrationNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-300">नोंदणी क्रमांक</FormLabel>
+                  <FormLabel className="text-gray-300">
+                    नोंदणी क्रमांक
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="कंपनी नोंदणी क्रमांक"
@@ -154,7 +165,9 @@ const CompanyRegistrationForm = () => {
                 name="gstNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">GST क्रमांक (पर्यायी)</FormLabel>
+                    <FormLabel className="text-gray-300">
+                      GST क्रमांक (पर्यायी)
+                    </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="GST क्रमांक टाका (इच्छिक)"
@@ -172,7 +185,9 @@ const CompanyRegistrationForm = () => {
                 name="phoneNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">प्राथमिक संपर्क क्रमांक*</FormLabel>
+                    <FormLabel className="text-gray-300">
+                      प्राथमिक संपर्क क्रमांक*
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="tel"
@@ -194,7 +209,9 @@ const CompanyRegistrationForm = () => {
               name="alternatePhoneNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-300">पर्यायी संपर्क क्रमांक (इच्छिक)</FormLabel>
+                  <FormLabel className="text-gray-300">
+                    पर्यायी संपर्क क्रमांक (इच्छिक)
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="tel"
