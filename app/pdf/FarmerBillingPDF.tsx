@@ -1,174 +1,277 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, PDFDownloadLink } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import { format } from 'date-fns';
 
-// Create styles for the PDF
 const styles = StyleSheet.create({
   page: {
     padding: 30,
     fontFamily: 'Helvetica',
+    fontSize: 10,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#4F46E5',
+    paddingBottom: 10
   },
-  title: {
-    fontSize: 24,
+  companyDetails: {
+    width: '60%'
+  },
+  invoiceDetails: {
+    width: '35%',
+    alignItems: 'flex-end'
+  },
+  companyName: {
+    fontSize: 14,
     fontWeight: 'bold',
+    marginBottom: 5
   },
-  section: {
-    marginBottom: 10,
+  companyInfo: {
+    fontSize: 8,
+    lineHeight: 1.5
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  invoiceTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4F46E5',
+    marginBottom: 5
+  },
+  invoiceBox: {
+    backgroundColor: '#F5F3FF',
+    padding: 8,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#DDD6FE'
+  },
+  customerBox: {
+    backgroundColor: '#F5F3FF',
+    padding: 8,
+    borderRadius: 4,
+    borderLeftWidth: 2,
+    borderLeftColor: '#4F46E5',
+    marginBottom: 15
+  },
+  sectionTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
     marginBottom: 5,
-  },
-  label: {
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  value: {
-    fontSize: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    paddingBottom: 3
   },
   table: {
     width: '100%',
-    borderStyle: 'solid',
+    marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#000',
-    marginBottom: 10,
+    borderColor: '#E5E7EB'
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#4F46E5',
+    paddingVertical: 5,
+    paddingHorizontal: 8
+  },
+  tableHeaderCell: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 8
   },
   tableRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderColor: '#000',
+    borderBottomColor: '#E5E7EB',
+    paddingVertical: 5,
+    paddingHorizontal: 8
   },
-  tableCell: {
-    padding: 5,
-    fontSize: 10,
-    borderRightWidth: 1,
-    borderRightColor: '#000',
+  alternateRow: {
+    backgroundColor: '#F9FAFB'
   },
-  totalSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  itemCell: {
+    width: '40%'
+  },
+  qtyCell: {
+    width: '15%',
+    textAlign: 'right'
+  },
+  rateCell: {
+    width: '20%',
+    textAlign: 'right'
+  },
+  amountCell: {
+    width: '25%',
+    textAlign: 'right'
+  },
+  totals: {
     marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#4F46E5',
+    paddingTop: 10
   },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 3
+  },
+  totalLabel: {
+    width: '25%',
+    textAlign: 'right',
+    paddingRight: 10,
+    fontWeight: 'bold'
+  },
+  totalValue: {
+    width: '25%',
+    textAlign: 'right'
+  },
+  grandTotal: {
+    fontWeight: 'bold',
+    color: '#4F46E5'
+  },
+  footer: {
+    marginTop: 15,
+    fontSize: 8,
+    textAlign: 'center',
+    fontStyle: 'italic'
+  }
 });
 
-// PDF Invoice Component
+interface Product {
+  productType: string;
+  quantity: number;
+  rate: number;
+}
+
+interface Expenses {
+  adat: number;
+  hamali: number;
+  tolai: number;
+  varai: number;
+  bharai: number;
+  motorBhade: number;
+}
+
 interface BillData {
   billNumber: string;
   farmerName: string;
   phoneNumber: string;
   city: string;
   billDate: Date;
-  products: { productType: string; quantity: number; rate: number }[];
-  expenses: Record<string, number>;
+  products: Product[];
+  expenses: Expenses;
   totalValue: number;
   totalExpense: number;
   totalPayableAmount: number;
 }
 
-export const FarmerBillingPDF = ({ billData }: { billData: BillData }) => (
+interface CompanyDetails {
+  companyName: string;
+  address: string;
+  city: string;
+  state: string;
+  phoneNumber: string;
+  registrationNumber: string;
+}
+
+const FarmerBillingPDF = ({ billData, companyDetails }: { billData: BillData, companyDetails: CompanyDetails }) => (
   <Document>
     <Page size="A4" style={styles.page}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Invoice</Text>
-        <Text style={styles.value}>
-          Bill Number: {billData.billNumber}
-        </Text>
+        <View style={styles.companyDetails}>
+          <Text style={styles.companyName}>{companyDetails.companyName}</Text>
+          <Text style={styles.companyInfo}>
+            {companyDetails.address}, {companyDetails.city}, {companyDetails.state}
+            {"\n"}
+            Phone: {companyDetails.phoneNumber}
+            {"\n"}
+            Registration No: {companyDetails.registrationNumber}
+          </Text>
+        </View>
+        
+        <View style={styles.invoiceDetails}>
+          <View style={styles.invoiceBox}>
+            <Text style={[styles.tableHeaderCell, { marginBottom: 3 }]}>TAX INVOICE</Text>
+            <Text>Invoice: {billData.billNumber}</Text>
+            <Text>Date: {format(billData.billDate, 'dd/MM/yyyy')}</Text>
+          </View>
+        </View>
       </View>
 
-      {/* Farmer Details */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text style={styles.label}>Farmer Name:</Text>
-          <Text style={styles.value}>{billData.farmerName}</Text>
+      {/* Customer Details */}
+      <View style={styles.customerBox}>
+        <Text style={{ fontWeight: 'bold', marginBottom: 3 }}>Bill To: {billData.farmerName}</Text>
+        <Text>{billData.city}</Text>
+        <Text>Phone: {billData.phoneNumber}</Text>
+      </View>
+
+      {/* Products Table */}
+      <Text style={styles.sectionTitle}>Product Details</Text>
+      <View style={styles.table}>
+        <View style={styles.tableHeader}>
+          <Text style={[styles.tableHeaderCell, styles.itemCell]}>Item & Description</Text>
+          <Text style={[styles.tableHeaderCell, styles.qtyCell]}>Qty</Text>
+          <Text style={[styles.tableHeaderCell, styles.rateCell]}>Rate </Text> {/* Added Rs here */}
+          <Text style={[styles.tableHeaderCell, styles.amountCell]}>Amount </Text> {/* Added Rs here */}
         </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Phone Number:</Text>
-          <Text style={styles.value}>{billData.phoneNumber}</Text>
+        
+        {billData.products.map((product, index) => (
+          <View key={index} style={[styles.tableRow, index % 2 === 0 ? styles.alternateRow : {}]}>
+            <Text style={styles.itemCell}>{product.productType}</Text>
+            <Text style={styles.qtyCell}>{product.quantity}</Text>
+            <Text style={styles.rateCell}>{(product.rate)}</Text>
+            <Text style={[styles.amountCell, { fontWeight: 'bold' }]}>
+              {(product.quantity * product.rate)}
+            </Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Expenses Table */}
+      <Text style={styles.sectionTitle}>Expenses Breakdown</Text>
+      <View style={[styles.table, { marginBottom: 10 }]}>
+        <View style={[styles.tableHeader, { backgroundColor: '#7C3AED' }]}>
+          <Text style={[styles.tableHeaderCell, styles.itemCell]}>Expense Type</Text>
+          <Text style={[styles.tableHeaderCell, styles.amountCell]}>Amount</Text> {/* Added Rs here */}
         </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>City:</Text>
-          <Text style={styles.value}>{billData.city}</Text>
+        
+        {Object.entries(billData.expenses)
+          .filter(([, value]) => value > 0)
+          .map(([key, value], index) => (
+            <View key={key} style={[styles.tableRow, index % 2 === 0 ? styles.alternateRow : {}]}>
+              <Text style={styles.itemCell}>{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}</Text>
+              <Text style={[styles.amountCell, { fontWeight: 'bold' }]}>
+                {(value)}
+              </Text>
+            </View>
+          ))}
+      </View>
+
+      {/* Totals */}
+      <View style={styles.totals}>
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>Sub Total:</Text>
+          <Text style={styles.totalValue}>{(billData.totalValue)}</Text>
         </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Bill Date:</Text>
-          <Text style={styles.value}>
-            {format(billData.billDate, 'dd/MM/yyyy')}
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>Total Expenses:</Text>
+          <Text style={styles.totalValue}>{(billData.totalExpense)}</Text>
+        </View>
+        <View style={[styles.totalRow, { marginTop: 5 }]}>
+          <Text style={[styles.totalLabel, styles.grandTotal]}>TOTAL AMOUNT:</Text>
+          <Text style={[styles.totalValue, styles.grandTotal]}>
+            {(billData.totalPayableAmount)}
           </Text>
         </View>
       </View>
 
-      {/* Products Table */}
-      <View style={styles.table}>
-        <View style={[styles.tableRow, { backgroundColor: '#f0f0f0' }]}>
-          <Text style={[styles.tableCell, { width: '40%' }]}>Product Type</Text>
-          <Text style={[styles.tableCell, { width: '20%' }]}>Quantity</Text>
-          <Text style={[styles.tableCell, { width: '20%' }]}>Rate</Text>
-          <Text style={[styles.tableCell, { width: '20%', borderRightWidth: 0 }]}>Total</Text>
-        </View>
-        {billData.products.map((product, index) => (
-          <View key={index} style={styles.tableRow}>
-            <Text style={[styles.tableCell, { width: '40%' }]}>
-              {product.productType}
-            </Text>
-            <Text style={[styles.tableCell, { width: '20%' }]}>
-              {product.quantity}
-            </Text>
-            <Text style={[styles.tableCell, { width: '20%' }]}>
-              {product.rate}
-            </Text>
-            <Text style={[styles.tableCell, { width: '20%', borderRightWidth: 0 }]}>
-              {product.quantity * product.rate}
-            </Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Expenses Section */}
-      <View style={styles.section}>
-        <Text style={[styles.label, { marginBottom: 5 }]}>Expenses Breakdown:</Text>
-        {Object.entries(billData.expenses).map(([key, value]) => (
-          <View key={key} style={styles.row}>
-            <Text style={styles.value}>{key}:</Text>
-            <Text style={styles.value}>{value}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Totals */}
-      <View style={styles.totalSection}>
-        <Text style={styles.label}>Total Product Value:</Text>
-        <Text style={styles.value}>{billData.totalValue}</Text>
-      </View>
-      <View style={styles.totalSection}>
-        <Text style={styles.label}>Total Expenses:</Text>
-        <Text style={styles.value}>{billData.totalExpense}</Text>
-      </View>
-      <View style={styles.totalSection}>
-        <Text style={[styles.label, { fontWeight: 'bold' }]}>Total Payable Amount:</Text>
-        <Text style={[styles.value, { fontWeight: 'bold' }]}>
-          {billData.totalPayableAmount}
-        </Text>
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Text>All amounts mentioned are in Indian Rupees (INR)</Text>
+        <Text>Thank you for your business!</Text>
       </View>
     </Page>
   </Document>
 );
 
-// Modify the existing FarmerBillingForm to include PDF generation
-export const PDFGenerationButton = ({ billData }: { billData: BillData }) => {
-  return (
-    <PDFDownloadLink
-      document={<FarmerBillingPDF billData={billData} />}
-      fileName={`bill_${billData.billNumber}.pdf`}
-      className="w-full bg-green-700 text-white hover:bg-green-600 transition-colors h-12 text-base flex items-center justify-center"
-    >
-      {({ loading }) => (loading ? 'Generating PDF...' : 'Download Invoice PDF')}
-    </PDFDownloadLink>
-  );
-};
+export default FarmerBillingPDF;

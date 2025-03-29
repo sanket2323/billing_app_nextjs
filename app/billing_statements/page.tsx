@@ -15,6 +15,8 @@ import { getUserSession } from "../actions/auth-actions";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
+
+
 type Bill = {
   id: string;
   billDate: { seconds: number; nanoseconds: number };
@@ -93,14 +95,14 @@ const Page = () => {
       try {
         setIsLoading(true);
         setPageLoading(true);
-        
+
         const session = await getUserSession();
         if (!session?.user?.id) {
           toast.error("कृपया बिल पाहण्यासाठी साइन इन करा।");
           setPageLoading(false);
           return;
         }
-        
+
         const userID = session.user.id;
         const userDocRef = doc(db, "users", userID);
         const billsCollectionRef = collection(userDocRef, "bills");
@@ -113,6 +115,7 @@ const Page = () => {
           };
         });
 
+            
         setBills(billsData);
       } catch (error) {
         console.error("Error fetching session or user data:", error);

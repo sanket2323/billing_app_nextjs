@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -34,11 +34,36 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { db } from "@/lib/firebaseConfig";
-import { collection, doc, getDoc, setDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { pdf } from "@react-pdf/renderer";
-import { FarmerBillingPDF } from "../pdf/FarmerBillingPDF";
+import FarmerBillingPDF from "../pdf/FarmerBillingPDF";
+
+interface CompanyDetails {
+  address: string;
+  alternatePhoneNumber?: string | null;
+  city: string;
+  companyName: string;
+  createdAt: string; // You can use Date if you plan to convert it
+  gstNumber?: string | null;
+  phoneNumber: string;
+  registrationNumber: string;
+  state: string;
+}
+// type Bill = {
+//   id: string;
+//   billDate: { seconds: number; nanoseconds: number };
+//   billNumber: string;
+//   amount?: number;
+//   expense: Expenses;
+//   city: string;
+//   farmerName: string;
+//   product: Product[];
+//   totalExpense: number;
+//   totalPayableAmount: number;
+//   totalValue: number;
+// };
 
 // Form schema
 const formSchema = z.object({
@@ -160,16 +185,80 @@ const FarmerBillingForm = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const generateAndDownloadPDF = async (billData: any) => {
-    const blob = await pdf(<FarmerBillingPDF billData={billData} />).toBlob();
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `bill_${billData.billNumber}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    if (!companyDetails) {
+      const fetchedCompanyDetails = await fetchCompanyDetails();
+      if (!fetchedCompanyDetails) {
+        toast.error("Cannot generate PDF without company details");
+        return;
+      }
+
+      const blob = await pdf(
+        <FarmerBillingPDF
+          billData={billData}
+          companyDetails={fetchedCompanyDetails}
+        />
+      ).toBlob();
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `bill_${billData.billNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } else {
+      const blob = await pdf(
+        <FarmerBillingPDF billData={billData} companyDetails={companyDetails} />
+      ).toBlob();
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `bill_${billData.billNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
   };
+
+  const fetchCompanyDetails = async () => {
+    try {
+      const session = await getUserSession();
+      if (!session?.user?.id) {
+        toast.error("Please sign in to access company details.");
+        return null;
+      }
+      const userId = session.user.id;
+      const userDocRef = doc(db, "users", userId);
+      const companyRef = collection(userDocRef, "company_details");
+      const querySnapshotCompany = await getDocs(companyRef);
+
+      if (!querySnapshotCompany.empty) {
+        // Get the first company details document
+        const companyData =
+          querySnapshotCompany.docs[0].data() as CompanyDetails;
+        setCompanyDetails(companyData);
+        return companyData;
+      } else {
+        toast.error(
+          "No company details found. Please set up your company profile first."
+        );
+        return null;
+      }
+    } catch (error) {
+      console.error("Error fetching company details:", error);
+      toast.error("Failed to fetch company data");
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      await fetchCompanyDetails();
+    })();
+  }, []);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const completeSubmission = {
@@ -256,7 +345,9 @@ const FarmerBillingForm = () => {
   const handleAddProduct = () => {
     productForm.handleSubmit(addProduct)();
   };
-
+  const [companyDetails, setCompanyDetails] = useState<CompanyDetails | null>(
+    null
+  );
   return (
     <div className="flex items-center justify-center p-4">
       <div className="w-full max-w-5xl sm:p-8 md:p-10 rounded-xl shadow-2xl">
