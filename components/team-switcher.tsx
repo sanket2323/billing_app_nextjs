@@ -1,15 +1,12 @@
 "use client"
-
 import * as React from "react"
-import { ChevronsUpDown, Plus } from "lucide-react"
-
+import { ChevronsUpDown, Pencil, Plus } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -18,21 +15,42 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useRouter } from "next/navigation"
 
-export function TeamSwitcher({
-  teams,
+export function CompanySwitcher({
+  companyDetails,
+  hasCompanyDetails = false,
 }: {
-  teams: {
-    name: string
-    logo: React.ElementType
-    plan: string
-  }[]
+  companyDetails: {
+    companyName: string;
+    state: string;
+    logo?: React.ElementType;
+  },
+  hasCompanyDetails?: boolean;
 }) {
   const { isMobile } = useSidebar()
-  const [activeTeam, setActiveTeam] = React.useState(teams[0])
+  const router = useRouter()
+  
+  // Default logo if not provided
+  const DefaultLogo = companyDetails.logo || (() => (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2"
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className="size-4"
+    >
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  ))
 
-  if (!activeTeam) {
-    return null
+  const handleCompanyAction = () => {
+    // Navigate to the company_details route instead of edit-company-details
+    router.push("/company_details")
   }
 
   return (
@@ -45,11 +63,11 @@ export function TeamSwitcher({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <activeTeam.logo className="size-4" />
+                <DefaultLogo />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{activeTeam.name}</span>
-                <span className="truncate text-xs">{activeTeam.plan}</span>
+                <span className="truncate font-medium">{companyDetails.companyName || "Your Company"}</span>
+                <span className="truncate text-xs">{companyDetails.state || "Location"}</span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -61,27 +79,23 @@ export function TeamSwitcher({
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">
-              Teams
+              Company Settings
             </DropdownMenuLabel>
-            {teams.map((team, index) => (
-              <DropdownMenuItem
-                key={team.name}
-                onClick={() => setActiveTeam(team)}
-                className="gap-2 p-2"
-              >
-                <div className="flex size-6 items-center justify-center rounded-md border">
-                  <team.logo className="size-3.5 shrink-0" />
-                </div>
-                {team.name}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
-              <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                <Plus className="size-4" />
+            <DropdownMenuItem 
+              className="gap-2 p-2 cursor-pointer"
+              onClick={handleCompanyAction}
+            >
+              <div className="flex size-6 items-center justify-center rounded-md border">
+                {hasCompanyDetails ? (
+                  <Pencil className="size-3.5 shrink-0" />
+                ) : (
+                  <Plus className="size-3.5 shrink-0" />
+                )}
               </div>
-              <div className="text-muted-foreground font-medium">Add team</div>
+              <div className="font-medium">
+                {hasCompanyDetails ? "Edit Company Details" : "Add Company Details"}
+              </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

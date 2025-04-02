@@ -90,7 +90,7 @@ const CompanyRegistrationForm = () => {
       }
         const userID = session.user.id;
         const userDocRef = doc(db, "users", userID);
-        const companyDocRef = doc(collection(userDocRef,"company_details"))
+        const companyDocRef = doc(collection(userDocRef,"company_details"),values.companyName+values.address)
       
 
       await setDoc(companyDocRef,companyData)
