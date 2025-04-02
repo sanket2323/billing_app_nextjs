@@ -89,14 +89,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB'
   },
   itemCell: {
-    width: '40%'
+    width: '35%'
   },
   qtyCell: {
+    width: '10%',
+    textAlign: 'right'
+  },
+  weightCell: {
     width: '15%',
     textAlign: 'right'
   },
   rateCell: {
-    width: '20%',
+    width: '15%',
     textAlign: 'right'
   },
   amountCell: {
@@ -139,6 +143,7 @@ const styles = StyleSheet.create({
 interface Product {
   productType: string;
   quantity: number;
+  weight: number;
   rate: number;
 }
 
@@ -149,6 +154,9 @@ interface Expenses {
   varai: number;
   bharai: number;
   motorBhade: number;
+  uchhal: number;
+  bardana: number;
+  itar: number;
 }
 
 interface BillData {
@@ -211,17 +219,19 @@ const FarmerBillingPDF = ({ billData, companyDetails }: { billData: BillData, co
         <View style={styles.tableHeader}>
           <Text style={[styles.tableHeaderCell, styles.itemCell]}>Item & Description</Text>
           <Text style={[styles.tableHeaderCell, styles.qtyCell]}>Qty</Text>
-          <Text style={[styles.tableHeaderCell, styles.rateCell]}>Rate </Text> {/* Added Rs here */}
-          <Text style={[styles.tableHeaderCell, styles.amountCell]}>Amount </Text> {/* Added Rs here */}
+          <Text style={[styles.tableHeaderCell, styles.weightCell]}>Weight</Text>
+          <Text style={[styles.tableHeaderCell, styles.rateCell]}>Rate</Text>
+          <Text style={[styles.tableHeaderCell, styles.amountCell]}>Amount</Text>
         </View>
         
         {billData.products.map((product, index) => (
           <View key={index} style={[styles.tableRow, index % 2 === 0 ? styles.alternateRow : {}]}>
             <Text style={styles.itemCell}>{product.productType}</Text>
             <Text style={styles.qtyCell}>{product.quantity}</Text>
+            <Text style={styles.weightCell}>{product.weight}</Text>
             <Text style={styles.rateCell}>{(product.rate)}</Text>
             <Text style={[styles.amountCell, { fontWeight: 'bold' }]}>
-              {(product.quantity * product.rate)}
+              {(product.weight * product.rate)}
             </Text>
           </View>
         ))}
@@ -232,7 +242,7 @@ const FarmerBillingPDF = ({ billData, companyDetails }: { billData: BillData, co
       <View style={[styles.table, { marginBottom: 10 }]}>
         <View style={[styles.tableHeader, { backgroundColor: '#7C3AED' }]}>
           <Text style={[styles.tableHeaderCell, styles.itemCell]}>Expense Type</Text>
-          <Text style={[styles.tableHeaderCell, styles.amountCell]}>Amount</Text> {/* Added Rs here */}
+          <Text style={[styles.tableHeaderCell, styles.amountCell]}>Amount</Text>
         </View>
         
         {Object.entries(billData.expenses)

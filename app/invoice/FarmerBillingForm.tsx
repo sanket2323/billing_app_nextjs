@@ -51,19 +51,6 @@ interface CompanyDetails {
   registrationNumber: string;
   state: string;
 }
-// type Bill = {
-//   id: string;
-//   billDate: { seconds: number; nanoseconds: number };
-//   billNumber: string;
-//   amount?: number;
-//   expense: Expenses;
-//   city: string;
-//   farmerName: string;
-//   product: Product[];
-//   totalExpense: number;
-//   totalPayableAmount: number;
-//   totalValue: number;
-// };
 
 // Form schema
 const formSchema = z.object({
@@ -82,10 +69,11 @@ const formSchema = z.object({
   billDate: z.date(),
 });
 
-// Product input schema
+// Product input schema - Modified to include weight
 const productSchema = z.object({
   productType: z.string().min(1, { message: "मालाचा प्रकार आवश्यक आहे" }),
   quantity: z.number().min(0, { message: "वैध संख्या टाका" }),
+  weight: z.number().min(0, { message: "वैध वजन टाका" }),
   rate: z.number().min(0, { message: "वैध दर टाका" }),
 });
 
@@ -120,6 +108,7 @@ const FarmerBillingForm = () => {
     defaultValues: {
       productType: "",
       quantity: 0,
+      weight: 0,
       rate: 0,
     },
   });
@@ -141,7 +130,7 @@ const FarmerBillingForm = () => {
 
   const totalValueOfProductsFunction = (updatedProducts: Product[]) => {
     const total = updatedProducts.reduce(
-      (sum, product) => sum + product.quantity * product.rate,
+      (sum, product) => sum + product.weight * product.rate,
       0
     );
     setTotalValueOfProducts(total);
@@ -306,6 +295,7 @@ const FarmerBillingForm = () => {
         products: products.map((product) => ({
           productType: product.productType,
           quantity: product.quantity,
+          weight: product.weight,
           rate: product.rate,
         })),
         totalValue: totalValueOfProducts,
@@ -480,7 +470,7 @@ const FarmerBillingForm = () => {
             </div>
             <div className="border-b-2"></div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <FormField
                 control={productForm.control}
                 name="productType"
@@ -514,8 +504,6 @@ const FarmerBillingForm = () => {
                         value={field.value === 0 ? "" : field.value}
                         onChange={(e) => {
                           const value = e.target.value;
-                          // If the field is empty, set it to 0 in the form state,
-                          // but display empty string in the input
                           field.onChange(value === "" ? 0 : Number(value));
                         }}
                         className="bg-gray-800 text-white border-gray-700"
@@ -526,7 +514,29 @@ const FarmerBillingForm = () => {
                   </FormItem>
                 )}
               />
-
+              <FormField
+                control={productForm.control}
+                name="weight"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-300">वजन</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="वजन"
+                        value={field.value === 0 ? "" : field.value}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value === "" ? 0 : Number(value));
+                        }}
+                        className="bg-gray-800 text-white border-gray-700"
+                        disabled={loading}
+                      />
+                    </FormControl>
+                    <FormMessage className="text-red-400" />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={productForm.control}
                 name="rate"
@@ -568,12 +578,13 @@ const FarmerBillingForm = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[200px]">मालाचा प्रकार</TableHead>
-                    <TableHead className="w-[100px]">नग</TableHead>
-                    <TableHead className="w-[100px]">दर</TableHead>
+                    <TableHead className="w-[80px]">नग</TableHead>
+                    <TableHead className="w-[80px]">वजन</TableHead>
+                    <TableHead className="w-[80px]">दर</TableHead>
                     <TableHead className="w-[100px] text-right">
                       रक्कम
                     </TableHead>
-                    <TableHead className="w-[100px] text-center">
+                    <TableHead className="w-[80px] text-center">
                       क्रिया
                     </TableHead>
                   </TableRow>
@@ -583,9 +594,10 @@ const FarmerBillingForm = () => {
                     <TableRow key={product.id}>
                       <TableCell>{product.productType}</TableCell>
                       <TableCell>{product.quantity}</TableCell>
+                      <TableCell>{product.weight}</TableCell>
                       <TableCell>{product.rate}</TableCell>
                       <TableCell className="text-right">
-                        {product.quantity * product.rate}
+                        {product.weight * product.rate}
                       </TableCell>
                       <TableCell className="text-center">
                         <Button
@@ -605,7 +617,7 @@ const FarmerBillingForm = () => {
                 </TableBody>
                 <TableFooter>
                   <TableRow>
-                    <TableCell colSpan={3}>एकूण किंमत:</TableCell>
+                    <TableCell colSpan={4}>एकूण किंमत:</TableCell>
                     <TableCell className="text-right">
                       {totalValueOfProducts}
                     </TableCell>
