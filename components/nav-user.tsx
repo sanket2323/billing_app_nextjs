@@ -60,12 +60,9 @@ export function NavUser({
 
   const logoutGoogle = async () => {
     toast("User Logged Out Successfully");
-    // First update the UI immediately
     setUser(guestUser);
-    // Then perform the actual logout action
     await signOutWithGoogle();
-    
-
+  
   };
 
   return (
