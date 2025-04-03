@@ -212,6 +212,38 @@ const FarmerBillingForm = () => {
     }
   };
 
+  // const fetchCompanyDetails = async () => {
+  //   try {
+  //     const session = await getUserSession();
+  //     if (!session?.user?.id) {
+  //       toast.error("Please sign in to access company details.");
+  //       return null;
+  //     }
+  //     const userId = session.user.id;
+  //     const userDocRef = doc(db, "users", userId);
+  //     const companyRef = collection(userDocRef, "company_details");
+  //     const querySnapshotCompany = await getDocs(companyRef);
+
+  //     if (!querySnapshotCompany.empty) {
+  //       // Get the first company details document
+  //       const companyData =
+  //         querySnapshotCompany.docs[0].data() as CompanyDetails;
+  //       setCompanyDetails(companyData);
+  //       return companyData;
+  //     } else {
+  //       toast.error(
+  //         "No company details found. Please set up your company profile first."
+  //       );
+  //       return null;
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching company details:", error);
+  //     toast.error("Failed to fetch company data");
+  //     return null;
+  //   }
+  // };
+
+
   const fetchCompanyDetails = async () => {
     try {
       const session = await getUserSession();
@@ -223,7 +255,7 @@ const FarmerBillingForm = () => {
       const userDocRef = doc(db, "users", userId);
       const companyRef = collection(userDocRef, "company_details");
       const querySnapshotCompany = await getDocs(companyRef);
-
+  
       if (!querySnapshotCompany.empty) {
         // Get the first company details document
         const companyData =
@@ -234,6 +266,8 @@ const FarmerBillingForm = () => {
         toast.error(
           "No company details found. Please set up your company profile first."
         );
+        // Redirect to company details page
+        router.push("/company_details");
         return null;
       }
     } catch (error) {
@@ -242,12 +276,11 @@ const FarmerBillingForm = () => {
       return null;
     }
   };
-
   useEffect(() => {
     (async () => {
       await fetchCompanyDetails();
     })();
-  }, []);
+  },);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const completeSubmission = {
