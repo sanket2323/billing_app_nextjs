@@ -28,6 +28,7 @@ import {
   signOutWithGoogle,
 } from "@/app/actions/auth-actions";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export function NavUser({
   user,
@@ -57,12 +58,13 @@ export function NavUser({
       toast("Error while Logging In");
     }
   };
-
+  const router = useRouter()
   const logoutGoogle = async () => {
     toast("User Logged Out Successfully");
+    router.replace("/");
     setUser(guestUser);
     await signOutWithGoogle();
-  
+    
   };
 
   return (

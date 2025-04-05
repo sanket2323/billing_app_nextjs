@@ -34,7 +34,7 @@ const companyFormSchema = z.object({
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 export default function EditCompanyDetails() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   const form = useForm<CompanyFormValues>({
@@ -51,16 +51,26 @@ export default function EditCompanyDetails() {
     },
   });
 
+  // Use a separate state to control rendering
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
   useEffect(() => {
-    async function fetchCompanyDetails() {
+    // Immediately invoke an async function
+    (async () => {
       try {
         const session = await getUserSession();
+        
         if (!session?.user?.id) {
           toast.error("Please sign in to access company details");
-          router.push("/");
+          setIsAuthenticated(false);
+          // This will happen synchronously after state update
+          router.replace("/");
           return;
         }
-
+        
+        setIsAuthenticated(true);
+        
+        // Only fetch data if authenticated
         const userId = session.user.id;
         const userDocRef = doc(db, "users", userId);
         const companyRef = collection(userDocRef, "company_details");
@@ -82,13 +92,51 @@ export default function EditCompanyDetails() {
           });
         }
       } catch (error) {
-        console.error("Error fetching company details:", error);
-        toast.error("Failed to fetch company details");
+        console.error("Error checking auth or fetching data:", error);
+        toast.error("An error occurred while loading your data");
+        setIsAuthenticated(false);
+        router.replace("/");
+      } finally {
+        setLoading(false);
       }
-    }
-
-    fetchCompanyDetails();
+    })();
   }, [form, router]);
+
+  // Show loading spinner while checking authentication
+  if (loading || isAuthenticated === null) {
+    return (
+      <div className="flex items-center justify-center min-h-screen w-full fixed inset-0 bg-white bg-opacity-90 z-50">
+        <div className="text-center">
+          <svg
+            className="animate-spin h-10 w-10 mx-auto mb-4 text-primary"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+          <p className="text-gray-700 font-medium">Loading company details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render the form at all if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   async function onSubmit(values: CompanyFormValues) {
     setLoading(true);
@@ -97,8 +145,8 @@ export default function EditCompanyDetails() {
     try {
       const session = await getUserSession();
       if (!session?.user?.id) {
-        toast.error("Please sign in to save company details", { id: toastId });
-        setLoading(false);
+        toast.error("Session expired. Please sign in again", { id: toastId });
+        router.replace("/");
         return;
       }
 
@@ -136,8 +184,8 @@ export default function EditCompanyDetails() {
   }
 
   return (
-    <div className="flex items-center justify-center p-4 min-w-screen ">
-      <div className="w-full max-w-3xl sm:p-8 md:p-10 rounded-xl shadow-2xl ">
+    <div className="flex items-center justify-center p-4 min-w-screen">
+      <div className="w-full max-w-3xl sm:p-8 md:p-10 rounded-xl shadow-2xl">
         <h1 className="text-2xl font-bold mb-6 text-center">Company Details</h1>
         
         <Form {...form}>
