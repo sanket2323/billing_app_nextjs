@@ -119,22 +119,6 @@ export function CompanySwitcher({
                 </div>
               </DropdownMenuItem>
             )}
-
-            {/* <DropdownMenuItem 
-              className="gap-2 p-2 cursor-pointer"
-              onClick={handleCompanyAction}
-            >
-              <div className="flex size-6 items-center justify-center rounded-md border">
-                {hasCompanyDetails ? (
-                  <Pencil className="size-3.5 shrink-0" />
-                ) : (
-                  <Plus className="size-3.5 shrink-0" />
-                )}
-              </div>
-              <div className="font-medium">
-                {hasCompanyDetails ? "Edit Company Details" : "Add Company Details"}
-              </div>
-            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
