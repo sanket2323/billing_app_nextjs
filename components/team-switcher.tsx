@@ -30,7 +30,13 @@ export function CompanySwitcher({
 }) {
   const { isMobile } = useSidebar();
   const router = useRouter();
-
+  const { setOpen } = useSidebar();
+  const { setOpenMobile } = useSidebar();
+  // const handleNavigation = (url: string) => {
+  //   router.push(url); // Client-side navigation, no refresh
+  //   setOpen(false)
+  //   setOpenMobile(false)
+  // };
   // Default logo if not provided
   const DefaultLogo =
     companyDetails.logo ||
@@ -52,10 +58,14 @@ export function CompanySwitcher({
 
   const handleCompanyAction = () => {
     // Navigate to the company_details route instead of edit-company-details
+    setOpen(false);
+    setOpenMobile(false);
     router.push("/company_details");
   };
   const handleCompanyActionEdit = () => {
     // Navigate to the edit-company-details route
+    setOpen(false);
+    setOpenMobile(false);
     router.push("/edit-company-details");
   };
 
@@ -109,14 +119,9 @@ export function CompanySwitcher({
                 onClick={handleCompanyAction}
               >
                 <div className="flex size-6 items-center justify-center rounded-md border">
-                  
-                    <Plus className="size-3.5 shrink-0" />
-                  
+                  <Plus className="size-3.5 shrink-0" />
                 </div>
-                <div className="font-medium">
-                
-                     Add Company Details
-                </div>
+                <div className="font-medium">Add Company Details</div>
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
