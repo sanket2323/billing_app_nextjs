@@ -197,7 +197,7 @@ export default function EditCompanyDetails() {
               )}
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="registrationNumber"
@@ -222,7 +222,7 @@ export default function EditCompanyDetails() {
                 name="gstNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>GST Number (Optional)</FormLabel>
+                    <FormLabel>GST Number</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Enter GST number"
@@ -298,7 +298,7 @@ export default function EditCompanyDetails() {
               )}
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="city"
