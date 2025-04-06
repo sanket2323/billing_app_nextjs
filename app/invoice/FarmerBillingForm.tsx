@@ -598,7 +598,7 @@ const FarmerBillingForm = () => {
             <Button
               type="button"
               onClick={handleAddProduct}
-              className="bg-blue-700 text-white hover:bg-blue-600 transition-colors"
+              className=" text-black  transition-colors"
               disabled={loading}
               aria-label="Add Product"
             >
@@ -741,7 +741,7 @@ const FarmerBillingForm = () => {
 
             <Button
               type="submit"
-              className="w-full bg-blue-700 text-white hover:bg-blue-600 transition-colors h-12 text-base"
+              className="w-full  text-black  transition-colors h-12 text-base"
               disabled={loading}
             >
               {loading ? (
