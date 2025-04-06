@@ -5,6 +5,7 @@ import {
   Building,
   Bot,
   SquareTerminal,
+  Home,
 } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -66,6 +67,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   
   const data = {
     navMain: [
+      {
+        title:"Home",
+        url: "/",
+        icon: Home,
+        isActive: true,
+      },
       {
         title: "Create New Bill",
         url: "/invoice",
