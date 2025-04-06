@@ -83,6 +83,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: "Billing Statements",
         url: "/billing_statements",
         icon: Bot,
+        isActive: true,
       },
     ],
   };
