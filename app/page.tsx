@@ -14,7 +14,7 @@ export default function Home() {
   const [heroVisible, setHeroVisible] = useState(false);
   const [featuresVisible, setFeaturesVisible] = useState(false);
   const [currentStat, setCurrentStat] = useState(0);
-
+  console.log("Current Stat:", currentStat);
   const gotoInvoiceForm = () => {
     router.push("/invoice");
   };
@@ -318,7 +318,7 @@ export default function Home() {
           </div>
           
           {/* Animated testimonials */}
-          <div className={`mt-20 max-w-4xl mx-auto bg-[#0d0f1a] border border-gray-800 rounded-xl p-8 md:p-10 transition-all duration-1000 ${animatedStats ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          {/* <div className={`mt-20 max-w-4xl mx-auto bg-[#0d0f1a] border border-gray-800 rounded-xl p-8 md:p-10 transition-all duration-1000 ${animatedStats ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <div className="flex flex-col md:flex-row items-center">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-2xl font-bold text-white mb-6 md:mb-0 md:mr-8">
                 {currentStat === 0 ? "JS" : currentStat === 1 ? "AM" : "TK"}
@@ -347,7 +347,72 @@ export default function Home() {
                 </div>
               </div>
             </div>
+          </div> */}
+            <div className={`mt-20 max-w-5xl mx-auto transition-all duration-1000 ${animatedStats ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+  <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
+    <span className="gradient-text">How It Works</span>
+  </h2>
+  
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    {[
+      {
+        step: "1",
+        title: "Upload Company Details",
+        description: "Set up your business profile with company information, logo, and contact details.",
+        icon: <Database className="w-8 h-8 text-blue-400" />
+      },
+      {
+        step: "2",
+        title: "Create Invoices",
+        description: "Generate professional invoices with automatic bill numbers and payment calculations.",
+        icon: <FileText className="w-8 h-8 text-blue-400" />
+      },
+      {
+        step: "3",
+        title: "Access Reports",
+        description: "View and export detailed financial reports to track your business performance.",
+        icon: <BarChart2 className="w-8 h-8 text-blue-400" />
+      }
+    ].map((item, index) => (
+      <div key={index} className="bg-[#0d0f1a] border border-gray-800 hover:border-blue-900 rounded-xl p-6 transition-all duration-500 hover-grow relative">
+        {/* Step number badge */}
+        <div className="absolute -top-4 -left-4 w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold">
+          {item.step}
+        </div>
+        
+        {/* If not the last item, show connecting arrow */}
+        {index < 2 && (
+          <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 text-blue-500">
+            <ArrowRight size={24} />
           </div>
+        )}
+        
+        <div className="mb-4 mt-2 flex justify-center">
+          <div className="h-16 w-16 bg-gradient-to-br from-blue-900 to-blue-700 rounded-lg flex items-center justify-center">
+            {item.icon}
+          </div>
+        </div>
+        
+        <h3 className="text-xl font-semibold mb-2 text-center">{item.title}</h3>
+        <p className="text-gray-400 text-center">{item.description}</p>
+      </div>
+    ))}
+  </div>
+  
+  {/* Action button below the flow */}
+  <div className="flex justify-center mt-10">
+    <Button 
+      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white relative overflow-hidden group hover-grow"
+      onClick={gotoInvoiceForm}
+      size="lg"
+    >
+      <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></span>
+      <span className="relative z-10 flex items-center">
+        Get Started Now <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+      </span>
+    </Button>
+  </div>
+</div>
         </div>
       </section>
 
