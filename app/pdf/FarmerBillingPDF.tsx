@@ -1,144 +1,285 @@
-import React from 'react';
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
-import { format } from 'date-fns';
+import React from "react";
+import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { format } from "date-fns";
 
 const styles = StyleSheet.create({
   page: {
     padding: 30,
-    fontFamily: 'Helvetica',
+    fontFamily: "Helvetica",
     fontSize: 10,
+    color: "#333333",
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#4F46E5',
-    paddingBottom: 10
+  flexRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  headerContainer: {
+    marginBottom: 20,
+  },
+  logoContainer: {
+    width: "30%",
+  },
+  invoiceTitle: {
+    width: "70%",
+    textAlign: "right",
+    paddingRight: 10,
+  },
+  invoiceTitleText: {
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  invoiceNumber: {
+    fontSize: 12,
+    marginTop: 5,
   },
   companyDetails: {
-    width: '60%'
-  },
-  invoiceDetails: {
-    width: '35%',
-    alignItems: 'flex-end'
+    marginBottom: 15,
   },
   companyName: {
     fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 5
+    fontWeight: "bold",
+    marginBottom: 3,
   },
-  companyInfo: {
-    fontSize: 8,
-    lineHeight: 1.5
+  companyAddress: {
+    fontSize: 9,
+    color: "#555555",
   },
-  invoiceTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#4F46E5',
-    marginBottom: 5
+  companyContact: {
+    fontSize: 9,
+    color: "#555555",
+    marginTop: 2,
   },
-  invoiceBox: {
-    backgroundColor: '#F5F3FF',
-    padding: 8,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#DDD6FE'
-  },
-  customerBox: {
-    backgroundColor: '#F5F3FF',
-    padding: 8,
-    borderRadius: 4,
-    borderLeftWidth: 2,
-    borderLeftColor: '#4F46E5',
-    marginBottom: 15
+  billToSection: {
+    marginBottom: 15,
   },
   sectionTitle: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 5,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    paddingBottom: 3
   },
-  table: {
-    width: '100%',
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#E5E7EB'
+  billToContent: {
+    fontSize: 9,
+    lineHeight: 1.5,
+  },
+  billToName: {
+    fontWeight: "bold",
+  },
+  infoTable: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginBottom: 20,
+  },
+  infoLabel: {
+    fontSize: 9,
+    color: "#333333",
+    textAlign: "right",
+    fontWeight: "normal",
+  },
+  productsTable: {
+    marginBottom: 20,
   },
   tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#4F46E5',
-    paddingVertical: 5,
-    paddingHorizontal: 8
-  },
-  tableHeaderCell: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 8
+    flexDirection: "row",
+    backgroundColor: "#333333",
+    padding: 8,
+    fontWeight: "bold",
+    fontSize: 9,
+    color: "white",
   },
   tableRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    paddingVertical: 5,
-    paddingHorizontal: 8
+    borderBottomColor: "#EEEEEE",
+    padding: 8,
+    fontSize: 9,
   },
-  alternateRow: {
-    backgroundColor: '#F9FAFB'
+  indexCell: {
+    width: "5%",
   },
-  itemCell: {
-    width: '35%'
-  },
-  qtyCell: {
-    width: '10%',
-    textAlign: 'right'
+  productCell: {
+    width: "30%",
   },
   weightCell: {
-    width: '15%',
-    textAlign: 'right'
+    width: "20%",
+    textAlign: "center",
   },
   rateCell: {
-    width: '15%',
-    textAlign: 'right'
+    width: "20%",
+    textAlign: "center",
   },
   amountCell: {
-    width: '25%',
-    textAlign: 'right'
+    width: "25%",
+    textAlign: "right",
   },
-  totals: {
+  productDescription: {
+    fontSize: 8,
+    color: "#777777",
+    marginTop: 2,
+  },
+  expensesTable: {
+    marginTop: 15,
+    marginBottom: 15,
+  },
+  expenseHeader: {
+    flexDirection: "row",
+    backgroundColor: "#333333",
+    padding: 6,
+    fontWeight: "bold",
+    fontSize: 9,
+    color: "white",
+  },
+  expenseCell: {
+    width: "75%",
+    paddingLeft: 8,
+  },
+  expenseValueCell: {
+    width: "25%",
+    textAlign: "right",
+    paddingRight: 8,
+  },
+  subTotalSection: {
     marginTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#4F46E5',
-    paddingTop: 10
   },
   totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: 3
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginBottom: 5,
   },
   totalLabel: {
-    width: '25%',
-    textAlign: 'right',
+    width: 150,
+    textAlign: "right",
+    fontSize: 9,
     paddingRight: 10,
-    fontWeight: 'bold'
   },
   totalValue: {
-    width: '25%',
-    textAlign: 'right'
+    width: 80,
+    textAlign: "right",
+    fontSize: 9,
   },
-  grandTotal: {
-    fontWeight: 'bold',
-    color: '#4F46E5'
+  finalTotal: {
+    backgroundColor: "#F5F5F5",
+    padding: 8,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 5,
   },
-  footer: {
+  finalTotalLabel: {
+    width: 150,
+    textAlign: "right",
+    fontWeight: "bold",
+    paddingRight: 10,
+  },
+  finalTotalValue: {
+    width: 80,
+    textAlign: "right",
+    fontWeight: "bold",
+    color: "#000", // Make it black for better visibility
+  },
+  amountInWords: {
     marginTop: 15,
-    fontSize: 8,
-    textAlign: 'center',
-    fontStyle: 'italic'
-  }
+    fontSize: 9,
+  },
+  bold: {
+    fontWeight: "bold",
+  },
 });
+
+// Helper function to convert number to words (Indian Rupees)
+const convertToWords = (amount: number) => {
+  // Convert to 2 decimal places
+  amount = Math.round(amount * 100) / 100;
+
+  const ones = [
+    "",
+    "One",
+    "Two",
+    "Three",
+    "Four",
+    "Five",
+    "Six",
+    "Seven",
+    "Eight",
+    "Nine",
+    "Ten",
+    "Eleven",
+    "Twelve",
+    "Thirteen",
+    "Fourteen",
+    "Fifteen",
+    "Sixteen",
+    "Seventeen",
+    "Eighteen",
+    "Nineteen",
+  ];
+  const tens = [
+    "",
+    "",
+    "Twenty",
+    "Thirty",
+    "Forty",
+    "Fifty",
+    "Sixty",
+    "Seventy",
+    "Eighty",
+    "Ninety",
+  ];
+
+  const numString = amount.toString();
+  const decimal =
+    numString.indexOf(".") !== -1
+      ? numString.substring(numString.indexOf(".") + 1)
+      : "00";
+  let wholeNum = Math.floor(amount);
+
+  if (wholeNum === 0) return "Zero Rupees";
+
+  let result = "";
+
+  // Handle Crores
+  if (wholeNum >= 10000000) {
+    result += convertToWords(Math.floor(wholeNum / 10000000)) + " Crore ";
+    wholeNum %= 10000000;
+  }
+
+  // Handle Lakhs
+  if (wholeNum >= 100000) {
+    result += convertToWords(Math.floor(wholeNum / 100000)) + " Lakh ";
+    wholeNum %= 100000;
+  }
+
+  // Handle Thousands
+  if (wholeNum >= 1000) {
+    result += convertToWords(Math.floor(wholeNum / 1000)) + " Thousand ";
+    wholeNum %= 1000;
+  }
+
+  // Handle Hundreds
+  if (wholeNum >= 100) {
+    result += convertToWords(Math.floor(wholeNum / 100)) + " Hundred ";
+    wholeNum %= 100;
+  }
+
+  // Handle Tens and Ones
+  if (wholeNum > 0) {
+    if (wholeNum < 20) {
+      result += ones[wholeNum];
+    } else {
+      result += tens[Math.floor(wholeNum / 10)];
+      if (wholeNum % 10 > 0) {
+        result += "-" + ones[wholeNum % 10];
+      }
+    }
+  }
+
+  result += " Rupees";
+
+  // Handle decimal
+  if (decimal !== "00") {
+    result += " and " + decimal + " Paise";
+  }
+
+  return result;
+};
 
 interface Product {
   productType: string;
@@ -179,109 +320,136 @@ interface CompanyDetails {
   state: string;
   phoneNumber: string;
   registrationNumber: string;
+  gstNumber?: string | null;
 }
 
-const FarmerBillingPDF = ({ billData, companyDetails }: { billData: BillData, companyDetails: CompanyDetails }) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      {/* Header */}
-      <View style={styles.header}>
+const FarmerBillingPDF = ({
+  billData,
+  companyDetails,
+}: {
+  billData: BillData;
+  companyDetails: CompanyDetails;
+}) => {
+  // Format the date properly
+  const formattedDate = format(new Date(billData.billDate), "dd/MM/yyyy");
+
+  // Map expense keys to proper English names
+  
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* Header Section */}
+        <View style={styles.headerContainer}>
+          <View style={styles.flexRow}>
+            <View style={styles.logoContainer}>
+              <Text style={styles.companyName}>
+                {companyDetails.companyName}
+              </Text>
+            </View>
+            <View style={styles.invoiceTitle}>
+              <Text style={styles.invoiceTitleText}>Invoice</Text>
+              <Text style={styles.invoiceNumber}>#{billData.billNumber}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Company Details */}
         <View style={styles.companyDetails}>
-          <Text style={styles.companyName}>{companyDetails.companyName}</Text>
-          <Text style={styles.companyInfo}>
-            {companyDetails.address}, {companyDetails.city}, {companyDetails.state}
-            {"\n"}
+          <Text style={styles.companyAddress}>
+            {companyDetails.address}, {companyDetails.city},{" "}
+            {companyDetails.state}
+          </Text>
+          <Text style={styles.companyContact}>
             Phone: {companyDetails.phoneNumber}
-            {"\n"}
+          </Text>
+          <Text style={styles.companyContact}>
             Registration No: {companyDetails.registrationNumber}
           </Text>
         </View>
-        
-        <View style={styles.invoiceDetails}>
-          <View style={styles.invoiceBox}>
-            <Text style={[styles.tableHeaderCell, { marginBottom: 3 }]}>TAX INVOICE</Text>
-            <Text>Invoice: {billData.billNumber}</Text>
-            <Text>Date: {format(billData.billDate, 'dd/MM/yyyy')}</Text>
+
+        {/* Bill To Section */}
+        <View style={styles.billToSection}>
+          <Text style={styles.sectionTitle}>Bill To</Text>
+          <Text style={[styles.billToContent, styles.billToName]}>
+            {billData.farmerName}
+          </Text>
+          <Text style={styles.billToContent}>{billData.city}</Text>
+          <Text style={styles.billToContent}>
+            Phone: {billData.phoneNumber}
+          </Text>
+        </View>
+
+        {/* Invoice Info Table */}
+        <View style={styles.infoTable}>
+          <View>
+            <Text style={styles.infoLabel}>Invoice Date: {formattedDate}</Text>
           </View>
         </View>
-      </View>
 
-      {/* Customer Details */}
-      <View style={styles.customerBox}>
-        <Text style={{ fontWeight: 'bold', marginBottom: 3 }}>Bill To: {billData.farmerName}</Text>
-        <Text>{billData.city}</Text>
-        <Text>Phone: {billData.phoneNumber}</Text>
-      </View>
-
-      {/* Products Table */}
-      <Text style={styles.sectionTitle}>Product Details</Text>
-      <View style={styles.table}>
-        <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderCell, styles.itemCell]}>Item & Description</Text>
-          <Text style={[styles.tableHeaderCell, styles.qtyCell]}>Qty</Text>
-          <Text style={[styles.tableHeaderCell, styles.weightCell]}>Weight</Text>
-          <Text style={[styles.tableHeaderCell, styles.rateCell]}>Rate</Text>
-          <Text style={[styles.tableHeaderCell, styles.amountCell]}>Amount</Text>
-        </View>
-        
-        {billData.products.map((product, index) => (
-          <View key={index} style={[styles.tableRow, index % 2 === 0 ? styles.alternateRow : {}]}>
-            <Text style={styles.itemCell}>{product.productType}</Text>
-            <Text style={styles.qtyCell}>{product.quantity}</Text>
-            <Text style={styles.weightCell}>{product.weight}</Text>
-            <Text style={styles.rateCell}>{(product.rate)}</Text>
-            <Text style={[styles.amountCell, { fontWeight: 'bold' }]}>
-              {(product.weight * product.rate)}
-            </Text>
+        {/* Products Table */}
+        <View style={styles.productsTable}>
+          <View style={styles.tableHeader}>
+            <Text style={styles.indexCell}>#</Text>
+            <Text style={styles.productCell}>Item & Description</Text>
+            <Text style={styles.weightCell}>Weight</Text>
+            <Text style={styles.rateCell}>Rate</Text>
+            <Text style={styles.amountCell}>Amount</Text>
           </View>
-        ))}
-      </View>
 
-      {/* Expenses Table */}
-      <Text style={styles.sectionTitle}>Expenses Breakdown</Text>
-      <View style={[styles.table, { marginBottom: 10 }]}>
-        <View style={[styles.tableHeader, { backgroundColor: '#7C3AED' }]}>
-          <Text style={[styles.tableHeaderCell, styles.itemCell]}>Expense Type</Text>
-          <Text style={[styles.tableHeaderCell, styles.amountCell]}>Amount</Text>
-        </View>
-        
-        {Object.entries(billData.expenses)
-          .filter(([, value]) => value > 0)
-          .map(([key, value], index) => (
-            <View key={key} style={[styles.tableRow, index % 2 === 0 ? styles.alternateRow : {}]}>
-              <Text style={styles.itemCell}>{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}</Text>
-              <Text style={[styles.amountCell, { fontWeight: 'bold' }]}>
-                {(value)}
+          {billData.products.map((product, index) => (
+            <View key={index} style={styles.tableRow}>
+              <Text style={styles.indexCell}>{index + 1}</Text>
+              <View style={styles.productCell}>
+                <Text>{product.productType}</Text>
+                <Text style={styles.productDescription}>
+                  Quantity: {product.quantity}
+                </Text>
+              </View>
+              <Text style={styles.weightCell}>{product.weight}</Text>
+              <Text style={styles.rateCell}>{product.rate}</Text>
+              <Text style={styles.amountCell}>
+                {(product.weight * product.rate).toFixed(2)}
               </Text>
             </View>
           ))}
-      </View>
+        </View>
 
-      {/* Totals */}
-      <View style={styles.totals}>
-        <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Sub Total:</Text>
-          <Text style={styles.totalValue}>{(billData.totalValue)}</Text>
+        {/* Sub Total Section */}
+        <View style={styles.subTotalSection}>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Sub Total</Text>
+            <Text style={styles.totalValue}>
+              {billData.totalValue.toFixed(2)}
+            </Text>
+          </View>
+
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Total Expenses</Text>
+            <Text style={styles.totalValue}>
+              {billData.totalExpense.toFixed(2)}
+            </Text>
+          </View>
+
+          <View style={styles.finalTotal}>
+            <Text style={styles.finalTotalLabel}>Total</Text>
+            <Text style={styles.finalTotalValue}>
+              ₹{billData.totalPayableAmount.toFixed(2)}
+            </Text>
+          </View>
         </View>
-        <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Total Expenses:</Text>
-          <Text style={styles.totalValue}>{(billData.totalExpense)}</Text>
-        </View>
-        <View style={[styles.totalRow, { marginTop: 5 }]}>
-          <Text style={[styles.totalLabel, styles.grandTotal]}>TOTAL AMOUNT:</Text>
-          <Text style={[styles.totalValue, styles.grandTotal]}>
-            {(billData.totalPayableAmount)}
+
+        {/* Amount In Words */}
+        <View style={styles.amountInWords}>
+          <Text>
+            Total In Words:{" "}
+            <Text style={styles.bold}>
+              {convertToWords(billData.totalPayableAmount)}
+            </Text>
           </Text>
         </View>
-      </View>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Text>All amounts mentioned are in Indian Rupees (INR)</Text>
-        <Text>Thank you for your business!</Text>
-      </View>
-    </Page>
-  </Document>
-);
+      </Page>
+    </Document>
+  );
+};
 
 export default FarmerBillingPDF;

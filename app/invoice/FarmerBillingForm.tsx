@@ -146,6 +146,67 @@ const FarmerBillingForm = () => {
     totalValueOfProductsFunction(updatedProducts);
     productForm.reset();
   };
+  const fetchLatestBillNumber = async () => {
+    try {
+      const session = await getUserSession();
+      if (!session?.user?.id) {
+        toast.error("Please sign in to generate bill number.");
+        return null;
+      }
+
+      const userId = session.user.id;
+      const userDocRef = doc(db, "users", userId);
+      const billsRef = collection(userDocRef, "bills");
+
+      // Get all bills
+      const querySnapshot = await getDocs(billsRef);
+
+      if (querySnapshot.empty) {
+        // If no bills exist yet, start with BA-000001
+        return "BA-000001";
+      }
+
+      // Extract all bill numbers and convert to numbers
+      const billNumbers = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        const billNum = data.billNumber;
+
+        // Check if the bill number follows our format (BA-XXXXXX)
+        if (billNum && billNum.startsWith("BA-")) {
+          // Extract the numeric part after "BA-"
+          const numericPart = billNum.substring(3);
+          // Convert to number, or 0 if not a valid number
+          return isNaN(parseInt(numericPart)) ? 0 : parseInt(numericPart);
+        }
+        return 0;
+      });
+
+      // Find the highest bill number
+      const highestBillNumber = Math.max(...billNumbers, 0);
+
+      // Create the next bill number with proper formatting (BA-XXXXXX)
+      // Increment the number and pad with leading zeros to ensure 6 digits
+      const nextNumber = highestBillNumber + 1;
+      const paddedNumber = nextNumber.toString().padStart(6, "0");
+
+      return `BA-${paddedNumber}`;
+    } catch (error) {
+      console.error("Error fetching latest bill number:", error);
+      toast.error("Failed to generate bill number");
+      return "BA-000001"; // Default in case of error
+    }
+  };
+  useEffect(() => {
+    const initialize = async () => {
+      await fetchCompanyDetails();
+      const latestBillNumber = await fetchLatestBillNumber();
+      if (latestBillNumber) {
+        form.setValue("billNumber", latestBillNumber);
+      }
+    };
+
+    initialize();
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   const removeProduct = (id: string) => {
     const updatedProducts = products.filter((product) => product.id !== id);
@@ -184,7 +245,10 @@ const FarmerBillingForm = () => {
       const blob = await pdf(
         <FarmerBillingPDF
           billData={billData}
-          companyDetails={fetchedCompanyDetails}
+          companyDetails={{
+            ...fetchedCompanyDetails,
+            gstNumber: fetchedCompanyDetails.gstNumber ?? undefined,
+          }}
         />
       ).toBlob();
 
@@ -243,7 +307,6 @@ const FarmerBillingForm = () => {
   //   }
   // };
 
-
   const fetchCompanyDetails = async () => {
     try {
       const session = await getUserSession();
@@ -255,7 +318,7 @@ const FarmerBillingForm = () => {
       const userDocRef = doc(db, "users", userId);
       const companyRef = collection(userDocRef, "company_details");
       const querySnapshotCompany = await getDocs(companyRef);
-  
+
       if (!querySnapshotCompany.empty) {
         // Get the first company details document
         const companyData =
@@ -280,7 +343,7 @@ const FarmerBillingForm = () => {
     (async () => {
       await fetchCompanyDetails();
     })();
-  },);
+  }, []); // Add empty dependency array here
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const completeSubmission = {
@@ -494,6 +557,7 @@ const FarmerBillingForm = () => {
                         {...field}
                         className="bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-600 h-12 text-base"
                         disabled={loading}
+                        readOnly // Add this line to make it read-only
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
