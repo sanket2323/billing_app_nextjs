@@ -320,7 +320,7 @@ interface CompanyDetails {
   state: string;
   phoneNumber: string;
   registrationNumber: string;
-  gstNumber?: string;
+  gstNumber?: string | null;
 }
 
 const FarmerBillingPDF = ({

@@ -245,7 +245,10 @@ const FarmerBillingForm = () => {
       const blob = await pdf(
         <FarmerBillingPDF
           billData={billData}
-          companyDetails={fetchedCompanyDetails}
+          companyDetails={{
+            ...fetchedCompanyDetails,
+            gstNumber: fetchedCompanyDetails.gstNumber ?? undefined,
+          }}
         />
       ).toBlob();
 
