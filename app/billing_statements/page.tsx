@@ -37,6 +37,7 @@ type Bill = {
   totalExpense: number;
   totalPayableAmount: number;
   totalValue: number;
+  phoneNumber: string;
 };
 
 type Product = {
@@ -193,25 +194,19 @@ const Page = () => {
   return (
     <div className="w-full flex flex-col h-[calc(100vh-80px)]">
       {/* Title and header */}
-      <div className="mb-4 p-4">
-        <h1 className="text-2xl font-semibold flex items-center mb-2">
-          <FileText className="mr-2 h-6 w-6 text-primary" /> 
-          बिल व्यवस्थापन
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          तुमच्या जतन केलेल्या बिलांची यादी पहा आणि व्यवस्थापित करा
-        </p>
-      </div>
 
       {/* Table Container - Takes remaining height with scrolling */}
       <div className="flex-1 overflow-auto px-4 pb-16">
-        <div className="rounded-lg border shadow-sm bg-card w-full overflow-hidden">
+        <div className="rounded-lg w-full overflow-hidden">
           <Table className="w-full table-fixed">
-            <TableHeader className="bg-muted/50 sticky top-0">
+            <TableHeader className="sticky top-0">
               <TableRow>
                 <TableHead className="w-[35%]">शेतकऱ्याचे नाव</TableHead>
+                
                 <TableHead className="w-[25%]">बिल क्रमांक</TableHead>
-                <TableHead className="w-[20%]">खर्च</TableHead>
+                {/* <TableHead className="w-[20%]">एकूण खर्च</TableHead> */}
+                
+                <TableHead className="w-[20%]">पत्ता</TableHead>
                 <TableHead className="w-[20%] text-right">देय रक्कम</TableHead>
               </TableRow>
             </TableHeader>
@@ -240,15 +235,20 @@ const Page = () => {
                   <TableRow key={bill.id} className={index % 2 === 0 ? "bg-muted/10" : ""}>
                     <TableCell className="font-medium">
                       <div className="truncate">{bill.farmerName}</div>
+                      <div>
+                    
+                        <span className="text-muted-foreground text-xs">{bill.phoneNumber}</span>
+                      </div>
                       <div className="text-xs text-muted-foreground flex items-center mt-1">
-                        <Calendar className="h-3 w-3 mr-1" />
+                        <Calendar className="h-3 w-3 mr-1"/>
                         {formatFirestoreDate(bill.billDate)}
                       </div>
                     </TableCell>
                     <TableCell className="truncate text-primary">{bill.billNumber}</TableCell>
                     <TableCell>
-                      <span className="text-muted-foreground">₹</span>
-                      <span>{bill.totalExpense?.toFixed(2) || "0.00"}</span>
+                      {/* <span className="text-muted-foreground">₹</span>
+                      <span>{bill.totalExpense?.toFixed(2) || "0.00"}</span> */}
+                      <span className="text-muted-foreground">{bill.city}</span>
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       <span className="text-muted-foreground">₹</span>
