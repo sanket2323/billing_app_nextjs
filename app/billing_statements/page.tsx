@@ -13,7 +13,7 @@ import { collection, doc, getDocs, query, orderBy, limit, startAfter } from "fir
 import React, { useEffect, useState } from "react";
 import { getUserSession } from "../actions/auth-actions";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, FileText, Calendar } from "lucide-react";
 
 import {
   Pagination,
@@ -95,7 +95,7 @@ const Page = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  console.log(hasMore)
+  
   const fetchBills = async (page: number) => {
     try {
       setIsLoading(true);
@@ -109,6 +109,22 @@ const Page = () => {
       const userDocRef = doc(db, "users", userID);
       const billsCollectionRef = collection(userDocRef, "bills");
 
+      // First query to get total count (in a real app, you might want to use a more efficient method)
+      if (page === 1) {
+        const countQuery = query(billsCollectionRef);
+        const countSnapshot = await getDocs(countQuery);
+        const totalBills = countSnapshot.size;
+        const calculatedTotalPages = Math.max(1, Math.ceil(totalBills / BILLS_PER_PAGE));
+        setTotalPages(calculatedTotalPages);
+        
+        // If user is trying to access a page that doesn't exist, redirect to page 1
+        if (page > calculatedTotalPages && page !== 1) {
+          setCurrentPage(1);
+          return;
+        }
+      }
+
+      // Now get the actual data for the requested page
       let q;
       if (page > 1 && lastDoc) {
         q = query(
@@ -132,12 +148,15 @@ const Page = () => {
       }));
 
       setBills(newBills);
-      setLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1]);
+      
+      // Only update lastDoc if we have results
+      if (querySnapshot.docs.length > 0) {
+        setLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1]);
+      }
+      
+      // If we got fewer results than requested, we're on the last page
       setHasMore(querySnapshot.docs.length === BILLS_PER_PAGE);
       
-      // For demo purposes, we'll assume 5 pages total
-      // In a real app, you'd need to get the total count from Firestore
-      setTotalPages(5);
     } catch (error) {
       console.error("Error fetching bills:", error);
       toast.error("बिले लोड करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा।");
@@ -148,6 +167,10 @@ const Page = () => {
   };
 
   useEffect(() => {
+    // If going back to page 1, reset lastDoc
+    if (currentPage === 1) {
+      setLastDoc(null);
+    }
     fetchBills(currentPage);
   }, [currentPage]);
 
@@ -168,115 +191,154 @@ const Page = () => {
   }
 
   return (
-    <div className="min-w-screen p-2 flex flex-col gap-4">
-      <Table>
-        <TableCaption>तुमच्या अलीकडील बिलांची यादी</TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="">शेतकऱ्याचे नाव</TableHead>
-            <TableHead>बिल क्रमांक</TableHead>
-            <TableHead>खर्च</TableHead>
-            <TableHead className="text-right">देय रक्कम</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading ? (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center">
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
-                  <span>बिले लोड होत आहेत...</span>
-                </div>
-              </TableCell>
-            </TableRow>
-          ) : bills.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center">
-                कोणतीही बिले सापडली नाहीत
-              </TableCell>
-            </TableRow>
-          ) : (
-            bills.map((bill) => (
-              <TableRow key={bill.id}>
-                <TableCell className="font-medium flex flex-col">
+    <div className="w-full flex flex-col h-[calc(100vh-80px)]">
+      {/* Title and header */}
+      <div className="mb-4 p-4">
+        <h1 className="text-2xl font-semibold flex items-center mb-2">
+          <FileText className="mr-2 h-6 w-6 text-primary" /> 
+          बिल व्यवस्थापन
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          तुमच्या जतन केलेल्या बिलांची यादी पहा आणि व्यवस्थापित करा
+        </p>
+      </div>
 
-                  {bill.farmerName}
-                  <span>
-                  {formatFirestoreDate(bill.billDate)}
-                  </span>
-                </TableCell>
-                <TableCell>{bill.billNumber}</TableCell>
-                <TableCell>₹{bill.totalExpense?.toFixed(2) || "0.00"}</TableCell>
-                <TableCell className="text-right">
-                  ₹{Number(bill.totalPayableAmount || 0).toFixed(2)}
-                </TableCell>
+      {/* Table Container - Takes remaining height with scrolling */}
+      <div className="flex-1 overflow-auto px-4 pb-16">
+        <div className="rounded-lg border shadow-sm bg-card w-full overflow-hidden">
+          <Table className="w-full table-fixed">
+            <TableHeader className="bg-muted/50 sticky top-0">
+              <TableRow>
+                <TableHead className="w-[35%]">शेतकऱ्याचे नाव</TableHead>
+                <TableHead className="w-[25%]">बिल क्रमांक</TableHead>
+                <TableHead className="w-[20%]">खर्च</TableHead>
+                <TableHead className="w-[20%] text-right">देय रक्कम</TableHead>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center">
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+                      <span>बिले लोड होत आहेत...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : bills.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-12">
+                    <div className="flex flex-col items-center justify-center text-muted-foreground">
+                      <FileText className="h-10 w-10 mb-2 opacity-20" />
+                      <p>कोणतीही बिले सापडली नाहीत</p>
+                      <p className="text-sm">अजून बिले नाहीत? नवीन बिल तयार करण्यासाठी वर जा</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                bills.map((bill, index) => (
+                  <TableRow key={bill.id} className={index % 2 === 0 ? "bg-muted/10" : ""}>
+                    <TableCell className="font-medium">
+                      <div className="truncate">{bill.farmerName}</div>
+                      <div className="text-xs text-muted-foreground flex items-center mt-1">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        {formatFirestoreDate(bill.billDate)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="truncate text-primary">{bill.billNumber}</TableCell>
+                    <TableCell>
+                      <span className="text-muted-foreground">₹</span>
+                      <span>{bill.totalExpense?.toFixed(2) || "0.00"}</span>
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      <span className="text-muted-foreground">₹</span>
+                      <span>{Number(bill.totalPayableAmount || 0).toFixed(2)}</span>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
 
-      {/* ShadCN Pagination */}
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious 
-              href="#" 
-              onClick={(e) => {
-                e.preventDefault();
-                handlePageChange(currentPage - 1);
-              }}
-              isActive={currentPage > 1}
-            />
-          </PaginationItem>
-          
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            // Show pages around current page
-            let pageNum;
-            if (totalPages <= 5) {
-              pageNum = i + 1;
-            } else if (currentPage <= 3) {
-              pageNum = i + 1;
-            } else if (currentPage >= totalPages - 2) {
-              pageNum = totalPages - 4 + i;
-            } else {
-              pageNum = currentPage - 2 + i;
-            }
-
-            return (
-              <PaginationItem key={pageNum}>
-                <PaginationLink
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handlePageChange(pageNum);
-                  }}
-                  isActive={pageNum === currentPage}
-                >
-                  {pageNum}
-                </PaginationLink>
-              </PaginationItem>
-            );
-          })}
-
-          {totalPages > 5 && currentPage < totalPages - 2 && (
+      {/* Pagination - Fixed to bottom */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t py-3 px-4 flex justify-center items-center shadow-md z-10">
+        <Pagination>
+          <PaginationContent>
             <PaginationItem>
-              <PaginationEllipsis />
+              <PaginationPrevious 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (currentPage > 1) {
+                    handlePageChange(currentPage - 1);
+                  }
+                }}
+                className={`${currentPage <= 1 ? "pointer-events-none opacity-50" : ""} transition-all duration-200`}
+              />
             </PaginationItem>
-          )}
+            
+            {/* Only render pagination numbers if we have data */}
+            {totalPages > 0 && Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              // Show pages around current page
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
 
-          <PaginationItem>
-            <PaginationNext 
-              href="#" 
-              onClick={(e) => {
-                e.preventDefault();
-                handlePageChange(currentPage + 1);
-              }}
-              isActive={currentPage < totalPages}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+              // Only render the button if the page exists
+              if (pageNum <= totalPages) {
+                return (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(pageNum);
+                      }}
+                      isActive={pageNum === currentPage}
+                      className="transition-all duration-200 hover:scale-105"
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              }
+              return null;
+            })}
+
+            {totalPages > 5 && currentPage < totalPages - 2 && (
+              <PaginationItem>
+                <PaginationEllipsis />
+              </PaginationItem>
+            )}
+
+            <PaginationItem>
+              <PaginationNext 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (currentPage < totalPages && hasMore) {
+                    handlePageChange(currentPage + 1);
+                  }
+                }}
+                className={`${(!hasMore || currentPage >= totalPages) ? "pointer-events-none opacity-50" : ""} transition-all duration-200`}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+        
+        <div className="text-sm text-muted-foreground ml-4">
+          पृष्ठ {currentPage} / {totalPages}
+        </div>
+      </div>
     </div>
   );
 };
