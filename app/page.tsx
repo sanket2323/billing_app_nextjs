@@ -400,7 +400,7 @@ export default function Home() {
   </div>
   
   {/* Action button below the flow */}
-  <div className="flex justify-center mt-10">
+  {/* <div className="flex justify-center mt-10">
     <Button 
       className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white relative overflow-hidden group hover-grow"
       onClick={gotoInvoiceForm}
@@ -411,7 +411,7 @@ export default function Home() {
         Get Started Now <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
       </span>
     </Button>
-  </div>
+  </div> */}
 </div>
         </div>
       </section>
