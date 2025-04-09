@@ -34,6 +34,8 @@ import {
   PaginationNext,
 } from "@/components/ui/pagination";
 import FarmerBillingPDF from "../pdf/FarmerBillingPDF";
+import { useRouter } from "next/navigation";
+import BillDetailModal from "./BillDetailModel";
 
 // Type for Firestore timestamp
 interface FirestoreTimestamp {
@@ -314,7 +316,10 @@ const Page = () => {
     if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
   };
-
+  const router = useRouter()
+  const navigateToDetailView = (billNumber: string) => {
+    router.push(`?bill_no=${billNumber}`);
+  };
   if (pageLoading) {
     return (
         <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
@@ -369,7 +374,8 @@ const Page = () => {
                 bills.map((bill, index) => (
                   <TableRow
                     key={bill.id}
-                    className={index % 2 === 0 ? "bg-muted/10" : ""}
+                    className={`${index % 2 === 0 ? "bg-muted/10" : ""} cursor-pointer hover:bg-muted/20 transition-colors`}
+                    onClick={() => navigateToDetailView(bill.billNumber)}
                   >
                     <TableCell className="font-medium">
                       <div className="truncate">{bill.farmerName}</div>
@@ -384,22 +390,25 @@ const Page = () => {
                       </div>
                     </TableCell>
                     <TableCell className="truncate text-primary">
-                      <div className="flex flex-col ">
-                      {bill.billNumber}
-                      <span>
-                      <button
-                        onClick={() => generateAndDownloadPDF(bill.billNumber)}
-                        disabled={generatingPdf === bill.billNumber}
-                        className="inline-flex items-center justify-center rounded-md h-10 w-10 text-primary hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                        title="PDF डाउनलोड करा"
-                      >
-                        {generatingPdf === bill.billNumber ? (
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                        ) : (
-                          <Download className="h-5 w-5" />
-                        )}
-                      </button>
-                      </span>
+                      <div className="flex flex-col">
+                        {bill.billNumber}
+                        <span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent row click event from triggering
+                              generateAndDownloadPDF(bill.billNumber);
+                            }}
+                            disabled={generatingPdf === bill.billNumber}
+                            className="inline-flex items-center justify-center rounded-md h-10 w-10 text-primary hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            title="PDF डाउनलोड करा"
+                          >
+                            {generatingPdf === bill.billNumber ? (
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                              <Download className="h-5 w-5" />
+                            )}
+                          </button>
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -411,7 +420,6 @@ const Page = () => {
                         {Number(bill.totalPayableAmount || 0).toFixed(2)}
                       </span>
                     </TableCell>
-                    
                   </TableRow>
                 ))
               )}
@@ -419,7 +427,7 @@ const Page = () => {
           </Table>
         </div>
       </div>
-
+              <BillDetailModal/>
       {/* Pagination - Fixed to bottom */}
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t py-3 px-4 flex justify-center items-center shadow-md z-10">
         <Pagination>
