@@ -159,7 +159,7 @@ const CompanyRegistrationForm = () => {
             />
 
             {/* GST Number and Primary Contact */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="gstNumber"
@@ -248,7 +248,7 @@ const CompanyRegistrationForm = () => {
               )}
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="city"
@@ -289,7 +289,7 @@ const CompanyRegistrationForm = () => {
 
             <Button
               type="submit"
-              className="w-full bg-blue-700 text-white hover:bg-blue-600 transition-colors h-12 text-base"
+              className="w-full  text-black  transition-colors h-12 text-base"
               disabled={loading}
             >
               {loading ? (
