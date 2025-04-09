@@ -329,7 +329,7 @@ const Page = () => {
   return (
     <div className="w-full flex flex-col h-[calc(100vh-80px)]">
       {/* Table Container - Takes remaining height with scrolling */}
-      <div className="flex-1 overflow-auto px-4 pb-16">
+      <div className="flex-1 overflow-auto px-2 pb-16">
         <div className="rounded-lg w-full overflow-hidden">
           <Table className="w-full table-fixed">
             <TableHeader className="sticky top-0">
@@ -381,8 +381,9 @@ const Page = () => {
                       </div>
                     </TableCell>
                     <TableCell className="truncate text-primary">
-                      <div className="flex  items-center">
+                      <div className="flex flex-col ">
                       {bill.billNumber}
+                      <span>
                       <button
                         onClick={() => generateAndDownloadPDF(bill.billNumber)}
                         disabled={generatingPdf === bill.billNumber}
@@ -395,6 +396,7 @@ const Page = () => {
                           <Download className="h-5 w-5" />
                         )}
                       </button>
+                      </span>
                       </div>
                     </TableCell>
                     <TableCell>
