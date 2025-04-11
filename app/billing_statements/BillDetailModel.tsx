@@ -227,7 +227,7 @@ const BillDetailModal = () => {
 
   // Close the modal by removing the query parameter
   const handleClose = () => {
-    router.push(".", { scroll: false });
+    router.push("./billing_statements", { scroll: false });
   };
 
   // Fetch data when bill number changes
@@ -257,7 +257,7 @@ const BillDetailModal = () => {
               <button
                 onClick={generateAndDownloadPDF}
                 disabled={generatingPdf}
-                className="inline-flex items-center justify-center rounded-md h-10 px-4 py-2 bg-primary text-white hover:bg-primary/90 transition-colors"
+                className="inline-flex items-center justify-center rounded-md h-10 px-4 py-2 bg-primary  hover:bg-primary/90 transition-colors text-black"
                 title="PDF डाउनलोड करा"
               >
                 {generatingPdf ? (
